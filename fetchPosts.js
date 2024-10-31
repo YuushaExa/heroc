@@ -45,7 +45,14 @@ async function fetchPosts() {
 
             await fs.writeFile(filePath, htmlContent);
             console.log(`Created post: ${fileName}`);
-            return `<li><a href="posts/${fileName}">${title}</a></li>`;
+
+            // Determine the folder structure from the JSON file path
+            const relativePath = path.relative(postsDirPath, jsonFilePath);
+            const folderPath = path.dirname(relativePath).replace(/\\/g, '/'); // Normalize for URL
+
+            // Construct the URL with the folder structure
+            const urlPath = path.join(folderPath, fileName).replace(/\\/g, '/'); // Normalize for URL
+            return `<li><a href="${urlPath}">${title}</a></li>`;
         }));
 
         const indexContent = `
