@@ -24,18 +24,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Cache Node.js
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/node-gyp
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-${{ hashFiles('**/package.json') }}
-
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'  # Specify the Node.js version
+          node-version: '18'  # Specify the Node.js version
 
       - name: Run fetchPosts script
         run: node fetchPosts.js  # Your script to generate posts
@@ -46,6 +38,7 @@ jobs:
 
       - name: Build HTML files
         run: |
+          # Assuming your generated files are in the 'posts' directory
           mkdir -p public
           cp -r posts/* public/  # Copy generated posts to the public directory
 
