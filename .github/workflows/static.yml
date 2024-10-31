@@ -30,7 +30,26 @@ jobs:
         with:
           node-version: '20'  # Specify the Node.js version
 
+      - name: Cache HTML files
+        uses: actions/cache@v3
+        with:
+          path: public  # Path to the directory containing your generated files
+          key: ${{ runner.os }}-html-${{ hashFiles('posts.json') }}  # Cache key based on posts.json hash
+          restore-keys: |
+            ${{ runner.os }}-html-
+
+      - name: Check if HTML files exist
+        id: check_html
+        run: |
+          if [ -d "public" ] && [ "$(ls -A public)" ]; then
+            echo "HTML files already exist. Skipping generation."
+            echo "skip_generation=true" >> $GITHUB_ENV
+          else
+            echo "skip_generation=false" >> $GITHUB_ENV
+          fi
+
       - name: Run fetchPosts script
+        if: env.skip_generation == 'false'
         run: node fetchPosts.js  # Your script to generate posts
 
       - name: Setup Pages
