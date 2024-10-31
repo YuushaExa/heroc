@@ -27,22 +27,28 @@ function fetchPosts() {
             // Loop through each post and create a Markdown file
             posts.forEach(post => {
                 const { title, content, date } = post; // Adjust based on your JSON structure
-                const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.md`;
+                const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
                 const filePath = path.join(postsDir, fileName);
 
-                const markdownContent = `---
-title: "${title}"
-date: "${date}"
----
-
-${content}
+                const htmlContent = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+</head>
+<body>
+    <h1>${title}</h1>
+    <p>${content}</p>
+</body>
+</html>
 `;
 
-                fs.writeFileSync(filePath, markdownContent);
+                fs.writeFileSync(filePath, htmlContent);
                 console.log(`Created post: ${fileName}`);
 
                 // Add entry to index
-                indexEntries.push(`<li><a href="${filePath}">${title}</a></li>`);
+                indexEntries.push(`<li><a href="${fileName}">${title}</a></li>`);
             });
 
             // Create the index.html file
@@ -63,7 +69,7 @@ ${content}
 </body>
 </html>
 `;
-            fs.writeFileSync(path.join(__dirname, 'index.html'), indexContent.trim());
+            fs.writeFileSync(path.join(__dirname, 'public', 'index.html'), indexContent.trim());
             console.log('Created index.html');
         } catch (parseError) {
             console.error('Error parsing JSON:', parseError);
