@@ -1,26 +1,30 @@
-name: Fetch Posts
+name: Deploy Posts to GitHub Pages
 
 on:
-  schedule:
-    - cron: '0 * * * *' # Runs every hour (adjust as needed)
+  push:
+    branches:
+      - main  # Change this to your default branch if it's different
   workflow_dispatch: # Allows manual triggering
 
 jobs:
-  fetch-posts:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14' # Specify the Node.js version
+
       - name: Run fetchPosts script
         run: node fetchPosts.js
 
-      - name: Commit and push changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add posts/*
-          git add index.html
-          git commit -m "Update posts" || echo "No changes to commit"
-          git push
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./posts  # Change this to the directory where your generated files are located
+          publish_branch: gh-pages  # The branch to deploy to
