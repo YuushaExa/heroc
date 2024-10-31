@@ -3,7 +3,7 @@ const axios = require('axios');
 const path = require('path');
 
 // URL of the JSON data
-const jsonUrl = 'https://example.com/posts.json'; // Replace with your JSON URL
+const jsonUrl = 'posts.json'; // Replace with your JSON URL
 
 async function fetchPosts() {
     try {
