@@ -11,17 +11,25 @@ async function fetchPosts() {
         // Filter for JSON files
         const jsonFiles = files.filter(file => file.endsWith('.json'));
 
-        const indexEntries = await Promise.all(jsonFiles.map(async (file) => {
-            const jsonFilePath = path.join(postsDirPath, file);
+        const allPosts = [];
+
+        // Read and parse each JSON file
+        for (const jsonFile of jsonFiles) {
+            const jsonFilePath = path.join(postsDirPath, jsonFile);
             const data = await fs.readFile(jsonFilePath, 'utf8');
             const posts = JSON.parse(data);
+            allPosts.push(...posts); // Combine posts from all files
+        }
 
-            return Promise.all(posts.map(async (post) => {
-                const { title, content, date } = post;
-                const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
-                const filePath = path.join(outputDirPath, fileName);
+        const outputDir = path.join(__dirname, 'public', 'posts');
+        await fs.mkdir(outputDir, { recursive: true });
 
-                const htmlContent = `<!DOCTYPE html>
+        const indexEntries = await Promise.all(allPosts.map(async (post) => {
+            const { title, content, date } = post;
+            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
+            const filePath = path.join(outputDir, fileName);
+
+            const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -35,14 +43,10 @@ async function fetchPosts() {
 </html>
 `;
 
-                await fs.writeFile(filePath, htmlContent);
-                console.log(`Created post: ${fileName}`);
-                return `<li><a href="${fileName}">${title}</a></li>`;
-            }));
+            await fs.writeFile(filePath, htmlContent);
+            console.log(`Created post: ${fileName}`);
+            return `<li><a href="posts/${fileName}">${title}</a></li>`;
         }));
-
-        // Flatten the indexEntries array
-        const flattenedIndexEntries = indexEntries.flat();
 
         const indexContent = `
 <!DOCTYPE html>
@@ -56,7 +60,7 @@ async function fetchPosts() {
     <h1>Blog Posts</h1>
     <h2>Latest Posts</h2>
     <ul>
-        ${flattenedIndexEntries.join('\n')}
+        ${indexEntries.join('\n')}
     </ul>
 </body>
 </html>
