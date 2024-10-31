@@ -1,31 +1,36 @@
 const fs = require('fs');
-const axios = require('axios');
 const path = require('path');
 
-// URL of the JSON data
-const jsonUrl = 'posts.json'; // Replace with your JSON URL
+// Path to the local JSON file
+const jsonFilePath = path.join(__dirname, 'posts.json'); // Adjust the path if necessary
 
-async function fetchPosts() {
-    try {
-        const response = await axios.get(jsonUrl);
-        const posts = response.data; // Assuming the JSON is an array of posts
-
-        // Create a directory for posts if it doesn't exist
-        const postsDir = path.join(__dirname, 'posts');
-        if (!fs.existsSync(postsDir)) {
-            fs.mkdirSync(postsDir);
+function fetchPosts() {
+    // Read the JSON file
+    fs.readFile(jsonFilePath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('Error reading posts.json:', err);
+            return;
         }
 
-        // Create an array to hold the index entries
-        const indexEntries = [];
+        try {
+            const posts = JSON.parse(data); // Assuming the JSON is an array of posts
 
-        // Loop through each post and create a Markdown file
-        posts.forEach(post => {
-            const { title, content, date } = post; // Adjust based on your JSON structure
-            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.md`;
-            const filePath = path.join(postsDir, fileName);
+            // Create a directory for posts if it doesn't exist
+            const postsDir = path.join(__dirname, 'posts');
+            if (!fs.existsSync(postsDir)) {
+                fs.mkdirSync(postsDir);
+            }
 
-            const markdownContent = `---
+            // Create an array to hold the index entries
+            const indexEntries = [];
+
+            // Loop through each post and create a Markdown file
+            posts.forEach(post => {
+                const { title, content, date } = post; // Adjust based on your JSON structure
+                const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.md`;
+                const filePath = path.join(postsDir, fileName);
+
+                const markdownContent = `---
 title: "${title}"
 date: "${date}"
 ---
@@ -33,15 +38,15 @@ date: "${date}"
 ${content}
 `;
 
-            fs.writeFileSync(filePath, markdownContent);
-            console.log(`Created post: ${fileName}`);
+                fs.writeFileSync(filePath, markdownContent);
+                console.log(`Created post: ${fileName}`);
 
-            // Add entry to index
-            indexEntries.push(`<li><a href="${filePath}">${title}</a></li>`);
-        });
+                // Add entry to index
+                indexEntries.push(`<li><a href="${filePath}">${title}</a></li>`);
+            });
 
-        // Create the index.html file
-        const indexContent = `
+            // Create the index.html file
+            const indexContent = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,11 +63,12 @@ ${content}
 </body>
 </html>
 `;
-        fs.writeFileSync(path.join(__dirname, 'index.html'), indexContent.trim());
-        console.log('Created index.html');
-    } catch (error) {
-        console.error('Error fetching posts:', error);
-    }
+            fs.writeFileSync(path.join(__dirname, 'index.html'), indexContent.trim());
+            console.log('Created index.html');
+        } catch (parseError) {
+            console.error('Error parsing JSON:', parseError);
+        }
+    });
 }
 
 fetchPosts();
