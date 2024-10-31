@@ -3,6 +3,7 @@ const path = require('path');
 
 // Path to the local JSON file
 const jsonFilePath = path.join(__dirname, 'posts.json'); // Adjust the path if necessary
+const baseUrl = 'https://yuushaexa.github.io/heroc/'; // Set your base URL here
 
 function fetchPosts() {
     // Read the JSON file
@@ -16,7 +17,7 @@ function fetchPosts() {
             const posts = JSON.parse(data); // Assuming the JSON is an array of posts
 
             // Create a directory for posts if it doesn't exist
-            const postsDir = path.join(__dirname, 'posts');
+            const postsDir = path.join(__dirname, 'public'); // Use public directory for deployment
             if (!fs.existsSync(postsDir)) {
                 fs.mkdirSync(postsDir);
             }
@@ -24,7 +25,7 @@ function fetchPosts() {
             // Create an array to hold the index entries
             const indexEntries = [];
 
-            // Loop through each post and create a Markdown file
+            // Loop through each post and create an HTML file
             posts.forEach(post => {
                 const { title, content, date } = post; // Adjust based on your JSON structure
                 const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
@@ -40,6 +41,7 @@ function fetchPosts() {
 <body>
     <h1>${title}</h1>
     <p>${content}</p>
+    <a href="${baseUrl}">Back to Home</a>
 </body>
 </html>
 `;
@@ -48,7 +50,7 @@ function fetchPosts() {
                 console.log(`Created post: ${fileName}`);
 
                 // Add entry to index
-                indexEntries.push(`<li><a href="${fileName}">${title}</a></li>`);
+                indexEntries.push(`<li><a href="${baseUrl}${fileName}">${title}</a></li>`);
             });
 
             // Create the index.html file
@@ -69,7 +71,7 @@ function fetchPosts() {
 </body>
 </html>
 `;
-            fs.writeFileSync(path.join(__dirname, 'public', 'index.html'), indexContent.trim());
+            fs.writeFileSync(path.join(postsDir, 'index.html'), indexContent.trim());
             console.log('Created index.html');
         } catch (parseError) {
             console.error('Error parsing JSON:', parseError);
