@@ -1,22 +1,27 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const jsonFilePath = path.join(__dirname, 'posts.json');
+const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON files
 
 async function fetchPosts() {
     try {
-        const data = await fs.readFile(jsonFilePath, 'utf8');
-        const posts = JSON.parse(data);
+        // Read all files in the posts directory
+        const files = await fs.readdir(postsDirPath);
+        
+        // Filter for JSON files
+        const jsonFiles = files.filter(file => file.endsWith('.json'));
 
-        const postsDir = path.join(__dirname, 'posts');
-        await fs.mkdir(postsDir, { recursive: true });
+        const indexEntries = await Promise.all(jsonFiles.map(async (file) => {
+            const jsonFilePath = path.join(postsDirPath, file);
+            const data = await fs.readFile(jsonFilePath, 'utf8');
+            const posts = JSON.parse(data);
 
-        const indexEntries = await Promise.all(posts.map(async (post) => {
-            const { title, content, date } = post;
-            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
-            const filePath = path.join(postsDir, fileName);
+            return Promise.all(posts.map(async (post) => {
+                const { title, content, date } = post;
+                const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
+                const filePath = path.join(outputDirPath, fileName);
 
-            const htmlContent = `<!DOCTYPE html>
+                const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -30,10 +35,14 @@ async function fetchPosts() {
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
-            console.log(`Created post: ${fileName}`);
-            return `<li><a href="${fileName}">${title}</a></li>`;
+                await fs.writeFile(filePath, htmlContent);
+                console.log(`Created post: ${fileName}`);
+                return `<li><a href="${fileName}">${title}</a></li>`;
+            }));
         }));
+
+        // Flatten the indexEntries array
+        const flattenedIndexEntries = indexEntries.flat();
 
         const indexContent = `
 <!DOCTYPE html>
@@ -47,7 +56,7 @@ async function fetchPosts() {
     <h1>Blog Posts</h1>
     <h2>Latest Posts</h2>
     <ul>
-               ${indexEntries.join('\n')}
+        ${flattenedIndexEntries.join('\n')}
     </ul>
 </body>
 </html>
