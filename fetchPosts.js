@@ -50,7 +50,7 @@ async function fetchPosts() {
             const relativePath = path.relative(postsDirPath, jsonFilePath);
             const folderPath = path.dirname(relativePath).replace(/\\/g, '/'); // Normalize for URL
 
-            // Construct the URL with the folder structure
+            // Construct the URL without the /posts/ prefix
             const urlPath = path.join(folderPath, fileName).replace(/\\/g, '/'); // Normalize for URL
             return `<li><a href="${urlPath}">${title}</a></li>`;
         }));
