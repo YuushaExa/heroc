@@ -13,14 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: '14' # Specify the Node.js version
-
-      - name: Install dependencies
-        run: npm install axios
-
       - name: Run fetchPosts script
         run: node fetchPosts.js
 
@@ -29,5 +21,6 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add posts/*
+          git add index.html
           git commit -m "Update posts" || echo "No changes to commit"
           git push
