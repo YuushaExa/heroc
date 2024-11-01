@@ -30,9 +30,6 @@ jobs:
         with:
           node-version: '20'  # Specify the Node.js version
 
-      - name: Install dependencies
-        run: npm install marked  # Install the marked library
-
       - name: Run fetchPosts script
         run: node fetchPosts.js  # Your script to generate posts
 
