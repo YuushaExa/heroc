@@ -30,6 +30,14 @@ jobs:
         with:
           node-version: '20'  # Specify the Node.js version
 
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-node-modules-${{ hashFiles('**/marked') }}
+          restore-keys: |
+            ${{ runner.os }}-node-modules-
+
       - name: Install dependencies
         run: npm install marked  # Install the marked library
 
