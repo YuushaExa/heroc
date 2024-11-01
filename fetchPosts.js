@@ -41,8 +41,8 @@ async function fetchPosts() {
         await fs.mkdir(outputDir, { recursive: true });
 
         await Promise.all(allPosts.map(async (post) => {
-            const { title, content, date, folder } = post;
-            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
+            const { title, content, folder } = post;
+            const fileName = `${title.replace(/\s+/g, '-').toLowerCase()}.html`; // Remove date from file name
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
