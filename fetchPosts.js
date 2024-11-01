@@ -40,9 +40,22 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
+        const titleCount = {}; // Object to keep track of title occurrences
+
         await Promise.all(allPosts.map(async (post) => {
             const { title, content, folder } = post;
-            const fileName = `${title.replace(/\s+/g, '-').toLowerCase()}.html`; // Remove date from file name
+            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+            let fileName = `${baseFileName}.html`; // Start with the base file name
+            let count = 1;
+
+            // Check for duplicates and modify the file name if necessary
+            while (titleCount[fileName]) {
+                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+                count++;
+            }
+
+            titleCount[fileName] = true; // Mark this file name as used
+
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
