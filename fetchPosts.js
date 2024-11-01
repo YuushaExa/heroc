@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { marked } = require('marked'); // Import the marked library
 
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
 
@@ -28,7 +29,8 @@ async function fetchPosts() {
                         const title = path.basename(file.name, '.md'); // Use the file name as the title
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
-                        allPosts.push({ title, content: data, date, folder }); // Add post info
+                        const content = marked(data); // Convert Markdown to HTML
+                        allPosts.push({ title, content, date, folder }); // Add post info
                     }
                 }
             }
@@ -70,7 +72,7 @@ async function fetchPosts() {
 </head>
 <body>
     <h1>${title}</h1>
-    <p>${content}</p>
+    <div>${content}</div> <!-- Use a div to contain the converted Markdown -->
 </body>
 </html>
 `;
