@@ -19,7 +19,8 @@ async function fetchPosts() {
                     // Read and parse JSON files
                     const data = await fs.readFile(filePath, 'utf8');
                     const posts = JSON.parse(data);
-                    allPosts.push(...posts.map(post => ({ ...post, folder: path.relative(postsDirPath, dir) }))); // Add folder info
+                    const folder = path.relative(postsDirPath, dir); // Get the folder name
+                    allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
                 }
             }
         }
@@ -33,7 +34,10 @@ async function fetchPosts() {
         const indexEntries = await Promise.all(allPosts.map(async (post) => {
             const { title, content, date, folder } = post;
             const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
-            const filePath = path.join(outputDir, fileName);
+            const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+
+            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
 
             const htmlContent = `<!DOCTYPE html>
 <html lang="en">
@@ -50,10 +54,8 @@ async function fetchPosts() {
 `;
 
             await fs.writeFile(filePath, htmlContent);
-            console.log(`Created post: ${fileName}`);
-            // Create a link with the folder structure
-            const folderPath = folder ? `${folder}/` : ''; // Add folder path if it exists
-            return `<li><a href="${folderPath}${fileName}">${title}</a></li>`;
+            console.log(`Created post: ${fileName} in ${folderPath}`);
+            return `<li><a href="${folder}/${fileName}">${title}</a></li>`; // Link with folder structure
         }));
 
         const indexContent = `
@@ -73,7 +75,7 @@ async function fetchPosts() {
 </body>
 </html>
 `;
-        await fs.writeFile(path.join(__dirname, 'public', 'index.html'), indexContent.trim());
+        await fs.writeFile(path.join(outputDir, 'index.html'), indexContent.trim());
         console.log('Created index.html');
     } catch (err) {
         console.error('Error:', err);
