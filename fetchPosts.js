@@ -31,15 +31,15 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-const indexEntries = await Promise.all(allPosts.map(async (post) => {
-    const { title, content, date, folder } = post;
-    const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
-    const folderPath = path.join(outputDir, folder); // Create a path for the folder
-    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+        await Promise.all(allPosts.map(async (post) => {
+            const { title, content, date, folder } = post;
+            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
+            const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
-    const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
 
-    const htmlContent = `<!DOCTYPE html>
+            const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -53,34 +53,13 @@ const indexEntries = await Promise.all(allPosts.map(async (post) => {
 </html>
 `;
 
-    await fs.writeFile(filePath, htmlContent);
-    
-    // Log the relative URL instead of the full path
-    const relativeUrl = `${folder}/${fileName}`;
-    console.log(`Created post: ${relativeUrl}`);
-    
-    return `<li><a href="${relativeUrl}">${title}</a></li>`; // Link with folder structure
-}));
+            await fs.writeFile(filePath, htmlContent);
+            
+            // Log the relative URL instead of the full path
+            const relativeUrl = `${folder}/${fileName}`;
+            console.log(`Created post: ${relativeUrl}`);
+        }));
 
-        const indexContent = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog Posts</title>
-</head>
-<body>
-    <h1>Blog Posts</h1>
-    <h2>Latest Posts</h2>
-    <ul>
-        ${indexEntries.join('\n')}
-    </ul>
-</body>
-</html>
-`;
-        await fs.writeFile(path.join(outputDir, 'index.html'), indexContent.trim());
-        console.log('Created index.html');
     } catch (err) {
         console.error('Error:', err);
     }
