@@ -24,12 +24,12 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public', 'posts');
         await fs.mkdir(outputDir, { recursive: true });
 
-        const indexEntries = await Promise.all(allPosts.map(async (post) => {
-            const { title, content, date } = post;
-            const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
-            const filePath = path.join(outputDir, fileName);
+   const indexEntries = await Promise.all(allPosts.map(async (post) => {
+    const { title, content, date } = post;
+    const fileName = `${date.replace(/:/g, '-')}-${title.replace(/\s+/g, '-').toLowerCase()}.html`;
+    const filePath = path.join(outputDir, fileName);
 
-            const htmlContent = `<!DOCTYPE html>
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -43,17 +43,11 @@ async function fetchPosts() {
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
-            console.log(`Created post: ${fileName}`);
+    await fs.writeFile(filePath, htmlContent);
+    console.log(`Created post: ${fileName}`);
+    return `<li><a href="${fileName}">${title}</a></li>`; // Changed this line
+}));
 
-            // Determine the folder structure from the JSON file path
-            const relativePath = path.relative(postsDirPath, jsonFilePath);
-            const folderPath = path.dirname(relativePath).replace(/\\/g, '/'); // Normalize for URL
-
-            // Construct the URL without the /posts/ prefix
-            const urlPath = path.join(folderPath, fileName).replace(/\\/g, '/'); // Normalize for URL
-            return `<li><a href="${urlPath}">${title}</a></li>`;
-        }));
 
         const indexContent = `
 <!DOCTYPE html>
