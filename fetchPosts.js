@@ -21,7 +21,7 @@ async function fetchPosts() {
             allPosts.push(...posts); // Combine posts from all files
         }
 
-        const outputDir = path.join(__dirname, 'public', 'posts');
+        const outputDir = path.join(__dirname, 'public', '');
         await fs.mkdir(outputDir, { recursive: true });
 
    const indexEntries = await Promise.all(allPosts.map(async (post) => {
