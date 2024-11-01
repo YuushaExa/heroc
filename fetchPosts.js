@@ -1,8 +1,10 @@
 const fs = require('fs').promises;
 const path = require('path');
-const { marked } = require('marked'); // Import the marked library
 
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
+
+// Load the external Markdown converter
+const markdownConverter = require('./markdownConverter'); // Adjust the path as necessary
 
 async function fetchPosts() {
     try {
@@ -29,7 +31,7 @@ async function fetchPosts() {
                         const title = path.basename(file.name, '.md'); // Use the file name as the title
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
-                        const content = marked(data); // Convert Markdown to HTML
+                        const content = markdownConverter.markdownToHtml(data); // Convert Markdown to HTML
                         allPosts.push({ title, content, date, folder }); // Add post info
                     }
                 }
