@@ -1,32 +1,41 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON files
+const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
 
 async function fetchPosts() {
     try {
         const allPosts = [];
 
-        // Function to read JSON files recursively
-        async function readJsonFiles(dir) {
+        // Function to read JSON and MD files recursively
+        async function readFiles(dir) {
             const files = await fs.readdir(dir, { withFileTypes: true });
             for (const file of files) {
                 const filePath = path.join(dir, file.name);
                 if (file.isDirectory()) {
                     // Recursively read subdirectories
-                    await readJsonFiles(filePath);
-                } else if (file.isFile() && file.name.endsWith('.json')) {
-                    // Read and parse JSON files
-                    const data = await fs.readFile(filePath, 'utf8');
-                    const posts = JSON.parse(data);
-                    const folder = path.relative(postsDirPath, dir); // Get the folder name
-                    allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
+                    await readFiles(filePath);
+                } else if (file.isFile()) {
+                    if (file.name.endsWith('.json')) {
+                        // Read and parse JSON files
+                        const data = await fs.readFile(filePath, 'utf8');
+                        const posts = JSON.parse(data);
+                        const folder = path.relative(postsDirPath, dir); // Get the folder name
+                        allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
+                    } else if (file.name.endsWith('.md')) {
+                        // Read Markdown files
+                        const data = await fs.readFile(filePath, 'utf8');
+                        const title = path.basename(file.name, '.md'); // Use the file name as the title
+                        const folder = path.relative(postsDirPath, dir); // Get the folder name
+                        const date = new Date().toISOString(); // Use current date for the post
+                        allPosts.push({ title, content: data, date, folder }); // Add post info
+                    }
                 }
             }
         }
 
         // Start reading from the posts directory
-        await readJsonFiles(postsDirPath);
+        await readFiles(postsDirPath);
 
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
