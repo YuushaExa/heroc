@@ -33,11 +33,6 @@ jobs:
       - name: Run fetchPosts script
         run: node fetchPosts.js  # Your script to generate posts
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public  # Path to the directory containing your generated files
-
   deploy:
     environment:
       name: github-pages
