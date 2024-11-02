@@ -13,7 +13,7 @@ async function fetchPosts() {
         let totalPages = 0; // Total number of posts created
 
         // Generate 500,000 fake posts
-        for (let i = 0; i < 300000; i++) {
+        for (let i = 0; i < 100000; i++) {
             const title = `Post Title ${i + 1}`; // Generate a simple title
             const content = generateFakeContent(); // Generate random content
             const date = new Date().toISOString(); // Use current date for the post
