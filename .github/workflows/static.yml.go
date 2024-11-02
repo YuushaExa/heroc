@@ -12,39 +12,49 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true  # Cancel any in-progress deployments
 
 jobs:
+
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 1  # Limit the checkout to the latest commit
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: '1.20'  # Specify the Go version
-
-      - name: Build static site
-        run: |
-          go mod init your-module-name  # Initialize Go module if not already done
-          go get github.com/russross/blackfriday/v2  # Add the blackfriday dependency
-          go build -o ssg  # Build the Go static site generator
-          ./ssg  # Run the static site generator
-
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./public  # Path to the directory containing your generated files
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0  # Fetch all history for better git log and changelog
+        
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.20'
+        
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+        
+    - name: Build static site
+      run: |
+        go mod init your-module-name
+        go get github.com/yuin/goldmark github.com/yuin/goldmark/renderer/html
+        go build -o ssg
+        ./ssg
+        
+    - name: Setup Pages
+      id: pages
+      uses: actions/configure-pages@v5
+      
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./public
 
   deploy:
     environment:
@@ -52,8 +62,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
-
+    
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
