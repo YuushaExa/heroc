@@ -34,6 +34,7 @@ async function fetchPosts() {
                         const posts = JSON.parse(data);
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
+                        totalPages += posts.length; // Increment total pages by the number of posts in the JSON file
                         nonPageFiles++; // Increment non-page files count
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
@@ -43,7 +44,7 @@ async function fetchPosts() {
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
                         allPosts.push({ title, content, date, folder }); // Add post info
-                        totalPages++; // Increment total pages count
+                        totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
                     }
@@ -92,10 +93,9 @@ async function fetchPosts() {
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
+                       await fs.writeFile(filePath, htmlContent);
             
             // Log the relative URL
-                       // Log the relative URL
             const relativeUrl = `${folder}/${fileName}`;
             console.log(`Created post: ${relativeUrl}`);
         }));
