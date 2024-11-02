@@ -9,7 +9,7 @@ import (
     "strings"
     "time"
 
-    "github.com/russross/blackfriday/v2"
+    "github.com/russross/blackfriday/"
 )
 
 type Post struct {
