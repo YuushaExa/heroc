@@ -1,8 +1,9 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// Load the marked library from the local file
-const { marked } = require('./libs/marked'); // Adjust the path as necessary
+// Load the markdown-it library from the local file
+const MarkdownIt = require('./libs/markdown-it'); // Adjust the path as necessary
+const md = new MarkdownIt(); // Create an instance of markdown-it
 
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
 
@@ -31,7 +32,7 @@ async function fetchPosts() {
                         const title = path.basename(file.name, '.md'); // Use the file name as the title
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
-                        const content = marked(data); // Convert Markdown to HTML using marked
+                        const content = md.render(data); // Convert Markdown to HTML using markdown-it
                         allPosts.push({ title, content, date, folder }); // Add post info
                     }
                 }
@@ -54,7 +55,7 @@ async function fetchPosts() {
 
             // Check for duplicates and modify the file name if necessary
             while (titleCount[fileName]) {
-                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+                               fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
                 count++;
             }
 
