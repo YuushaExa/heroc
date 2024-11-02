@@ -15,7 +15,7 @@ async function fetchPosts() {
         let staticFiles = 0; // Count of static files
 
         // Generate 500,000 fake posts
-        for (let i = 0; i < 50000; i++) {
+        for (let i = 0; i < 500000; i++) {
             const title = `Post Title ${i + 1}`; // Generate a simple title
             const content = generateFakeContent(); // Generate random content
             const date = new Date().toISOString(); // Use current date for the post
