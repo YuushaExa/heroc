@@ -8,9 +8,6 @@ import (
     "path/filepath"
     "strings"
     "time"
-
-    "github.com/yuin/goldmark"
-    "github.com/yuin/goldmark/renderer/html"
 )
 
 type Post struct {
@@ -68,17 +65,8 @@ func main() {
             title := strings.TrimSuffix(info.Name(), ".md")
             folder := filepath.Dir(path)
             date := time.Now().Format(time.RFC3339)
-            var md goldmark.Markdown
-            md = goldmark.New(
-                goldmark.WithRendererOptions(
-                    html.WithUnsafe(),
-                ),
-            )
-            var buf strings.Builder
-            if err := md.Convert(data, &buf); err != nil {
-                return err
-            }
-            allPosts = append(allPosts, Post{Title: title, Content: buf.String(), Date: date, Folder: folder})
+            content := string(data) // Use the raw content of the Markdown file
+            allPosts = append(allPosts, Post{Title: title, Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
@@ -114,7 +102,7 @@ func main() {
 
         filePath := filepath.Join(folderPath, fileName)
 
-                htmlContent := fmt.Sprintf(`<!DOCTYPE html>
+        htmlContent := fmt.Sprintf(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
