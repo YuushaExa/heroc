@@ -30,17 +30,6 @@ jobs:
       with:
         go-version: '1.23.2'
         
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: /go/pkg/mod
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
-        
-    - name: Add dependencies
-      run: go mod tidy  # Use go mod tidy to ensure all dependencies are fetched
-        
     - name: Build static site
       run: |
         go build -o ssg
