@@ -6,10 +6,7 @@ import (
     "io/ioutil"
     "os"
     "path/filepath"
-    "strings"
     "time"
-
-    "github.com/russross/blackfriday/v2"
 )
 
 type Post struct {
@@ -29,7 +26,6 @@ func generateFakePost(index int) Post {
 func main() {
     startTime := time.Now()
     postsDirPath := "./posts" // Directory containing JSON and MD files
-    outputDir := "./public"    // Output directory for generated HTML files
 
     // Create the posts directory if it doesn't exist
     os.MkdirAll(postsDirPath, os.ModePerm)
@@ -50,9 +46,6 @@ func main() {
         mdContent := fmt.Sprintf("# %s\n\n%s", post.Title, post.Content)
         ioutil.WriteFile(mdFilePath, []byte(mdContent), 0644)
     }
-
-    // Now you can call the existing code to process the posts
-    // (the rest of your existing code goes here)
 
     // For demonstration, we will just print the number of posts created
     fmt.Printf("Created %d fake posts.\n", numFakePosts)
