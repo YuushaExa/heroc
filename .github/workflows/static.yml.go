@@ -23,8 +23,12 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-        fetch-depth: 0  # Fetch all history for better git log and changelog
-        
+        fetch-depth: 1  # Fetch all history for better git log and changelog
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.20'
         
     - name: Build static site
       run: |
