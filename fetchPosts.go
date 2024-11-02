@@ -31,7 +31,7 @@ func main() {
     os.MkdirAll(postsDirPath, os.ModePerm)
 
     // Generate fake posts
-    numFakePosts := 5000000 // Number of fake posts to create
+    numFakePosts := 50000 // Number of fake posts to create
     for i := 1; i <= numFakePosts; i++ {
         // Create a fake post
         post := generateFakePost(i)
