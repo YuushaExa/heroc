@@ -10,9 +10,7 @@ const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON
 async function fetchPosts() {
     try {
         const allPosts = [];
-        let totalPages = 0;
-        let nonPageFiles = 0; // Count of non-page files
-        let staticFiles = 0; // Count of static files
+        let totalPages = 0; // Total number of posts created
 
         // Generate 500,000 fake posts
         for (let i = 0; i < 500000; i++) {
@@ -64,17 +62,12 @@ async function fetchPosts() {
 `;
 
             await fs.writeFile(filePath, htmlContent);
-            
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
         }));
 
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
-        console.log(`Total Pages: ${totalPages}`);
-        console.log(`Non-page Files: ${nonPageFiles}`);
-        console.log(`Static Files: ${staticFiles}`);
+        console.log(`Total Pages Created: ${totalPages}`);
+        console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
         console.error('Error:', err);
@@ -111,7 +104,7 @@ function generateRandomWord() {
     const length = Math.floor(Math.random() * 8) + 3; // Random word length (3 to 10)
     let word = '';
     const characters = 'abcdefghijklmnopqrstuvwxyz'; // Characters to choose from
-    for (let i = 0; i < length; i++) {
+       for (let i = 0; i < length; i++) {
         word += characters.charAt(Math.floor(Math.random() * characters.length));
     }
     return word;
