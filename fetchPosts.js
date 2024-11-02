@@ -12,18 +12,13 @@ async function fetchPosts() {
     try {
         const allPosts = [];
         let totalPages = 0;
-        let paginatorPages = 0; // You can implement pagination logic if needed
         let nonPageFiles = 0; // Count of non-page files
         let staticFiles = 0; // Count of static files
-        let processedImages = 0; // Count of processed images (if applicable)
-        let aliases = 0; // Count of aliases (if applicable)
-        let sitemaps = 0; // Count of sitemaps (if applicable)
-        let cleaned = 0; // Count of cleaned files (if applicable)
 
         // Function to read JSON and MD files recursively
         async function readFiles(dir) {
             const files = await fs.readdir(dir, { withFileTypes: true });
-            for (const file of files) {
+            const readPromises = files.map(async (file) => {
                 const filePath = path.join(dir, file.name);
                 if (file.isDirectory()) {
                     // Recursively read subdirectories
@@ -50,7 +45,8 @@ async function fetchPosts() {
                         staticFiles++; // Increment static files count for other file types
                     }
                 }
-            }
+            });
+            await Promise.all(readPromises); // Wait for all read operations to complete
         }
 
         // Start reading from the posts directory
@@ -59,7 +55,8 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const titleCount = {}; // Object to keep track of title occurrences
+        const titleCount = new Set(); // Use a Set to track unique titles
+        const writePromises = []; // Array to hold write promises
 
         // Function to write a single post to a file
         const writePost = async (post) => {
@@ -69,13 +66,15 @@ async function fetchPosts() {
             let count = 1;
 
             // Check for duplicates and modify the file name if necessary
-            while (titleCount[fileName]) {
+            while (titleCount.has(fileName)) {
                 fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
                 count++;
             }
 
-            titleCount[fileName] = true; // Mark this file name as used
+            titleCount.add(fileName); // Mark this file name as used
 
+            const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            await fs.mkdir(folderPath, { recursive: true }); // Ensure
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
@@ -89,17 +88,18 @@ async function fetchPosts() {
     <title>${title}</title>
 </head>
 <body>
-        <h1>${title}</h1>
+    <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
-            
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
+            // Collect the write promise instead of writing immediately
+            writePromises.push(fs.writeFile(filePath, htmlContent).then(() => {
+                // Log the relative URL after the file is successfully written
+                const relativeUrl = `${folder}/${fileName}`;
+                console.log(`Created post: ${relativeUrl}`);
+            }));
         };
 
         // Process posts with limited concurrency
@@ -113,16 +113,14 @@ async function fetchPosts() {
         // Start processing posts
         await processPosts();
 
+        // Wait for all write operations to complete
+        await Promise.all(writePromises);
+
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
-        console.log(`Paginator Pages: ${paginatorPages}`);
         console.log(`Non-page Files: ${nonPageFiles}`);
         console.log(`Static Files: ${staticFiles}`);
-        console.log(`Processed Images: ${processedImages}`);
-        console.log(`Aliases: ${aliases}`);
-        console.log(`Sitemaps: ${sitemaps}`);
-        console.log(`Cleaned: ${cleaned}`);
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
