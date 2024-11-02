@@ -89,7 +89,7 @@ async function fetchPosts() {
     <title>${title}</title>
 </head>
 <body>
-        <h1>${title}</h1>
+    <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
@@ -102,11 +102,17 @@ async function fetchPosts() {
             console.log(`Created post: ${relativeUrl}`);
         };
 
+        // Function to write posts in batches
+        const writePostsInBatch = async (posts) => {
+            const writePromises = posts.map(writePost);
+            await Promise.all(writePromises);
+        };
+
         // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
-                await Promise.all(chunk.map(writePost));
+                await writePostsInBatch(chunk); // Write the chunk of posts in parallel
             }
         };
 
@@ -133,4 +139,3 @@ async function fetchPosts() {
 // Start the timer to measure build time
 const startTime = Date.now();
 fetchPosts();
-
