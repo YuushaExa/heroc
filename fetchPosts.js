@@ -1,10 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-// Load the markdown-it library from the local file
-// const MarkdownIt = require('./libs/markdown-it'); // Removed MarkdownIt import
-// const md = new MarkdownIt(); // Removed MarkdownIt instance creation
-
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
 const MAX_CONCURRENT_WRITES = 200; // Maximum concurrent writes
 
@@ -50,22 +46,11 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const titleCount = {}; // Object to keep track of title occurrences
-
         // Function to write a single post to a file
         const writePost = async (post) => {
             const { title, content, folder } = post;
             const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
-            let fileName = `${baseFileName}.html`; // Start with the base file name
-            let count = 1;
-
-            // Check for duplicates and modify the file name if necessary
-            while (titleCount[fileName]) {
-                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-                count++;
-            }
-
-            titleCount[fileName] = true; // Mark this file name as used
+            const fileName = `${baseFileName}.html`; // Use the base file name directly
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
@@ -107,7 +92,7 @@ async function fetchPosts() {
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
-                console.log(`Paginator Pages: ${paginatorPages}`);
+        console.log(`Paginator Pages: ${paginatorPages}`);
         console.log(`Non-page Files: ${nonPageFiles}`);
         console.log(`Static Files: ${staticFiles}`);
         console.log(`Processed Images: ${processedImages}`);
@@ -116,7 +101,7 @@ async function fetchPosts() {
         console.log(`Cleaned: ${cleaned}`);
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
-    } catch (err) {
+     } catch (err) {
         console.error('Error:', err);
     }
 }
@@ -124,4 +109,3 @@ async function fetchPosts() {
 // Start the timer to measure build time
 const startTime = Date.now();
 fetchPosts();
-
