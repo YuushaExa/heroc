@@ -75,7 +75,7 @@ async function fetchPosts() {
 </head>
 <body>
     <h1>${title}</h1>
-    <div>${content}</div> <!-- Use a div to contain the converted Markdown -->
+    <div>${content}</div> 
 </body>
 </html>
 `;
