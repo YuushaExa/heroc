@@ -19,120 +19,45 @@ type Post struct {
     Folder  string `json:"folder"`
 }
 
+func generateFakePost(index int) Post {
+    title := fmt.Sprintf("Fake Post %d", index)
+    content := fmt.Sprintf("This is the content of fake post number %d.", index)
+    date := time.Now().Format(time.RFC3339)
+    return Post{Title: title, Content: content, Date: date, Folder: "fake"}
+}
+
 func main() {
     startTime := time.Now()
     postsDirPath := "./posts" // Directory containing JSON and MD files
     outputDir := "./public"    // Output directory for generated HTML files
 
-    allPosts := []Post{}
-    totalPages := 0
-    nonPageFiles := 0
-    staticFiles := 0
+    // Create the posts directory if it doesn't exist
+    os.MkdirAll(postsDirPath, os.ModePerm)
 
-    err := filepath.Walk(postsDirPath, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
+    // Generate fake posts
+    numFakePosts := 5000000 // Number of fake posts to create
+    for i := 1; i <= numFakePosts; i++ {
+        // Create a fake post
+        post := generateFakePost(i)
 
-        if info.IsDir() {
-            return nil
-        }
+        // Save as JSON
+        jsonFilePath := filepath.Join(postsDirPath, fmt.Sprintf("post_%d.json", i))
+        jsonData, _ := json.Marshal([]Post{post})
+        ioutil.WriteFile(jsonFilePath, jsonData, 0644)
 
-        switch {
-        case strings.HasSuffix(info.Name(), ".json"):
-            // Read and parse JSON files
-            data, err := ioutil.ReadFile(path)
-            if err != nil {
-                return err
-            }
-            var posts []Post
-            err = json.Unmarshal(data, &posts)
-            if err != nil {
-                return err
-            }
-            folder := filepath.Dir(path)
-            for i := range posts {
-                posts[i].Folder = folder
-                allPosts = append(allPosts, posts[i])
-            }
-            totalPages += len(posts)
-            nonPageFiles++
-
-        case strings.HasSuffix(info.Name(), ".md"):
-            // Read Markdown files
-            data, err := ioutil.ReadFile(path)
-            if err != nil {
-                return err
-            }
-            title := strings.TrimSuffix(info.Name(), ".md")
-            folder := filepath.Dir(path)
-            date := time.Now().Format(time.RFC3339)
-            content := blackfriday.Run(data)
-            allPosts = append(allPosts, Post{Title: title, Content: string(content), Date: date, Folder: folder})
-            totalPages++
-
-        default:
-            staticFiles++
-        }
-        return nil
-    })
-
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
+        // Save as Markdown
+        mdFilePath := filepath.Join(postsDirPath, fmt.Sprintf("post_%d.md", i))
+        mdContent := fmt.Sprintf("# %s\n\n%s", post.Title, post.Content)
+        ioutil.WriteFile(mdFilePath, []byte(mdContent), 0644)
     }
 
-    // Create output directory
-    os.MkdirAll(outputDir, os.ModePerm)
+    // Now you can call the existing code to process the posts
+    // (the rest of your existing code goes here)
 
-    titleCount := make(map[string]bool)
-
-    for _, post := range allPosts {
-        baseFileName := strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
-        fileName := fmt.Sprintf("%s.html", baseFileName)
-        count := 1
-
-        // Check for duplicates and modify the file name if necessary
-        for titleCount[fileName] {
-            fileName = fmt.Sprintf("%s-%d.html", baseFileName, count)
-            count++
-        }
-        titleCount[fileName] = true
-
-        folderPath := filepath.Join(outputDir, post.Folder)
-        os.MkdirAll(folderPath, os.ModePerm)
-
-        filePath := filepath.Join(folderPath, fileName)
-
-        htmlContent := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title>
-</head>
-<body>
-    <h1>%s</h1>
-    <div>%s</div> 
-</body>
-</html>
-`, post.Title, post.Title, post.Content)
-
-        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
-        if err != nil {
-            fmt.Println("Error writing file:", err)
-            return
-        }
-
-        // Log the relative URL
-        relativeUrl := filepath.Join(post.Folder, fileName)
-        fmt.Println("Created post:", relativeUrl)
-    }
+    // For demonstration, we will just print the number of posts created
+    fmt.Printf("Created %d fake posts.\n", numFakePosts)
 
     // After processing all posts, log the statistics
     fmt.Println("--- Build Statistics ---")
-    fmt.Printf("Total Pages: %d\n", totalPages)
-    fmt.Printf("Non-page Files: %d\n", nonPageFiles)
-    fmt.Printf("Static Files: %d\n", staticFiles)
-      fmt.Printf("Total Build Time: %v\n", time.Since(startTime))
+    fmt.Printf("Total Build Time: %v\n", time.Since(startTime))
 }
