@@ -74,8 +74,6 @@ async function fetchPosts() {
             titleCount.add(fileName); // Mark this file name as used
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
-            await fs.mkdir(folderPath, { recursive: true }); // Ensure
-            const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
             const filePath = path.join(folderPath, fileName); // Full path for the HTML file
