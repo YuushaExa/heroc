@@ -34,6 +34,7 @@ jobs:
         run: |
           go mod init your-module-name  # Initialize Go module if not already done
           go get github.com/russross/blackfriday/v2  # Add the blackfriday dependency
+          go mod tidy  # Ensure go.sum is updated
           go build -o ssg  # Build the Go static site generator
           ./ssg  # Run the static site generator
 
