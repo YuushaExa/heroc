@@ -30,7 +30,7 @@ jobs:
         with:
           go-version: '1.20'  # Specify the Go version
 
-   - name: Build static site
+      - name: Build static site
         run: |
           go mod init your-module-name  # Initialize Go module if not already done
           go get github.com/russross/blackfriday/v2  # Add the blackfriday dependency
