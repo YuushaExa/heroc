@@ -6,7 +6,7 @@ const MarkdownIt = require('./libs/markdown-it'); // Adjust the path as necessar
 const md = new MarkdownIt(); // Create an instance of markdown-it
 
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
-const MAX_CONCURRENT_WRITES = 100; // Maximum concurrent writes
+const MAX_CONCURRENT_WRITES = 200; // Maximum concurrent writes
 
 async function fetchPosts() {
     try {
@@ -89,7 +89,7 @@ async function fetchPosts() {
     <title>${title}</title>
 </head>
 <body>
-    <h1>${title}</h1>
+        <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
@@ -102,17 +102,11 @@ async function fetchPosts() {
             console.log(`Created post: ${relativeUrl}`);
         };
 
-        // Function to write posts in batches
-        const writePostsInBatch = async (posts) => {
-            const writePromises = posts.map(writePost);
-            await Promise.all(writePromises);
-        };
-
         // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
-                await writePostsInBatch(chunk); // Write the chunk of posts in parallel
+                await Promise.all(chunk.map(writePost));
             }
         };
 
