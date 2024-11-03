@@ -61,18 +61,34 @@ async function fetchPosts() {
 
         const nameCount = {}; // Object to keep track of name occurrences
 
-        // Function to write a single post to a file
-        const writePost = async (post) => {
-            const { name, content, folder } = post;
-            const baseFileName = name.replace(/\s+/g, '-').toLowerCase(); // Base file name
-            let fileName = `${baseFileName}.html`; // Start with the base file name
-            let count = 1;
+const nameCount = {}; // Initialize nameCount to track existing file names
 
-            // Check for duplicates and modify the file name if necessary
-            while (nameCount[fileName]) {
-                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-                count++;
-            }
+const writePost = async (post) => {
+    const { name, title, content, folder } = post;
+
+    if (!name || !title || !content || !folder) {
+        throw new Error("Post must contain name, title, content, and folder.");
+    }
+
+    // Create a base file name using both name and title
+    const baseFileName = `${name.replace(/\s+/g, '-').toLowerCase()}-${title.replace(/\s+/g, '-').toLowerCase()}`; 
+    let fileName = `${baseFileName}.html`; // Start with the base file name
+    let count = 1;
+
+    // Check for duplicates and modify the file name if necessary
+    while (nameCount[fileName]) {
+        fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+        count++;
+    }
+
+    // Mark the file name as used
+    nameCount[fileName] = true;
+
+    // Here you would write the content to the file (not shown)
+    // For example: await writeFile(`${folder}/${fileName}`, content);
+
+    return fileName; // Return the unique file name
+};
 
             nameCount[fileName] = true; // Mark this file name as used
 
