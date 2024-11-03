@@ -11,7 +11,7 @@ const MAX_CONCURRENT_WRITES = 200; // Maximum concurrent writes
 async function fetchPosts() {
     try {
         const allPosts = [];
-        let totalPages = 0;
+        let totalPages = 0; // Total pages count
         let nonPageFiles = 0; // Count of non-page files
         let staticFiles = 0; // Count of static files
 
@@ -35,9 +35,8 @@ async function fetchPosts() {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
-                        const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ content, date, folder }); // Add post info without title
+                        allPosts.push({ content, folder }); // Add post info without title
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
@@ -55,19 +54,15 @@ async function fetchPosts() {
         // Function to write a single post to a file
         const writePost = async (post, index) => {
             const { content, folder, isJson } = post;
-            const fileName = isJson ? `post-${index + 1}.json` : `post-${index + 1}.html`; // Use incremental numbers for file names
+            const fileName = isJson ? `post-${index + 1}.html` : `post-${index + 1}.html`; // Use incremental numbers for file names
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
             const filePath = path.join(folderPath, fileName); // Full path for the file
 
-            if (isJson) {
-                // Write JSON content directly
-                await fs.writeFile(filePath, content);
-            } else {
-                // Write HTML content for Markdown files
-                const htmlContent = `<!DOCTYPE html>
+            // Write HTML content for both JSON and Markdown files
+            const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -76,13 +71,12 @@ async function fetchPosts() {
 </head>
 <body>
     <h1>Post ${index + 1}</h1>
-    <div>${content}</div> 
+    <div>${isJson ? content : content}</div> 
 </body>
 </html>
 `;
 
-                await fs.writeFile(filePath, htmlContent);
-            }
+            await fs.writeFile(filePath, htmlContent);
         };
 
         // Process posts with limited concurrency
@@ -100,9 +94,9 @@ async function fetchPosts() {
 
         // Log the statistics
         console.log('--- Build Statistics ---');
-               console.log(`Total Posts Created: ${allPosts.length}`);
+        console.log(`Total Posts Created: ${allPosts.length}`);
         console.log(`Total Build Time: ${endTime - startTime} ms`); // Log total build time
-        console.log(`Total JSON Files Processed: ${nonPageFiles}`);
+               console.log(`Total JSON Files Processed: ${nonPageFiles}`);
         console.log(`Total Static Files Ignored: ${staticFiles}`);
 
     } catch (err) {
