@@ -12,13 +12,8 @@ async function fetchPosts() {
     try {
         const allPosts = [];
         let totalPages = 0;
-        let paginatorPages = 0; // You can implement pagination logic if needed
         let nonPageFiles = 0; // Count of non-page files
         let staticFiles = 0; // Count of static files
-        let processedImages = 0; // Count of processed images (if applicable)
-        let aliases = 0; // Count of aliases (if applicable)
-        let sitemaps = 0; // Count of sitemaps (if applicable)
-        let cleaned = 0; // Count of cleaned files (if applicable)
 
         // Function to read JSON and MD files recursively
         async function readFiles(dir) {
@@ -40,11 +35,10 @@ async function fetchPosts() {
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const date = path.basename(file.name, '.md'); // Use the file name as the date
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ date, content, date, folder }); // Add post info
+                        allPosts.push({ content, date, folder }); // Add post info without title
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
@@ -59,22 +53,10 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const dateCount = {}; // Object to keep track of date occurrences
-
         // Function to write a single post to a file
-        const writePost = async (post) => {
-            const { date, content, folder } = post;
-            const baseFileName = date.replace(/\s+/g, '-').toLowerCase(); // Base file name
-            let fileName = `${baseFileName}.html`; // Start with the base file name
-            let count = 1;
-
-            // Check for duplicates and modify the file name if necessary
-            while (dateCount[fileName]) {
-                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-                count++;
-            }
-
-            dateCount[fileName] = true; // Mark this file name as used
+        const writePost = async (post, index) => {
+            const { content, folder } = post;
+            const fileName = `post-${index + 1}.html`; // Use incremental numbers for file names
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
@@ -86,50 +68,40 @@ async function fetchPosts() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <date>${date}</date>
+    <title>Post ${index + 1}</title>
 </head>
 <body>
-        <h1>${date}</h1>
+    <h1>Post ${index + 1}</h1>
     <div>${content}</div> 
 </body>
 </html>
 `;
 
             await fs.writeFile(filePath, htmlContent);
-            
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
         };
 
         // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
-                await Promise.all(chunk.map(writePost));
+                await Promise.all(chunk.map((post, index) => writePost(post, i + index)));
             }
         };
 
         // Start processing posts
+        const startTime = Date.now();
         await processPosts();
+        const endTime = Date.now();
 
-        // After processing all posts, log the statistics
+        // Log the statistics
         console.log('--- Build Statistics ---');
-        console.log(`Total Pages: ${totalPages}`);
-        console.log(`Paginator Pages: ${paginatorPages}`);
-        console.log(`Non-page Files: ${nonPageFiles}`);
-        console.log(`Static Files: ${staticFiles}`);
-        console.log(`Processed Images: ${processedImages}`);
-        console.log(`Aliases: ${aliases}`);
-        console.log(`Sitemaps: ${sitemaps}`);
-        console.log(`Cleaned: ${cleaned}`);
-        console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
+        console.log(`Total Posts Created: ${allPosts.length}`);
+        console.log(`Total Build Time: ${endTime - startTime} ms`); // Log total build time
 
     } catch (err) {
         console.error('Error:', err);
     }
 }
 
-// Start the timer to measure build time
-const startTime = Date.now();
+// Start the fetchPosts function
 fetchPosts();
