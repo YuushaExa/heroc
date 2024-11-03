@@ -11,7 +11,7 @@ const MAX_CONCURRENT_WRITES = 200; // Maximum concurrent writes
 async function fetchPosts() {
     try {
         const allPosts = [];
-        let totalPages = 0; // Total pages count
+        let totalPages = 0;
         let nonPageFiles = 0; // Count of non-page files
         let staticFiles = 0; // Count of static files
 
@@ -25,18 +25,35 @@ async function fetchPosts() {
                     await readFiles(filePath);
                 } else if (file.isFile()) {
                     if (file.name.endsWith('.json')) {
-                        // Read and copy JSON files as raw files
+                        // Read and parse JSON files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const folder = path.relative(postsDirPath, dir); // Get the folder name
-                        allPosts.push({ content: data, folder, isJson: true }); // Mark as JSON
-                        totalPages++; // Increment total pages count for JSON files
-                        nonPageFiles++; // Increment non-page files count
+                        const jsonData = JSON.parse(data);
+
+                        // Check if the JSON structure matches the expected format
+                        if (jsonData.name && jsonData.email) {
+                            const title = jsonData.name; // Use the name as the title
+                            const content = `
+                                <h2>Contact Information</h2>
+                                <p><strong>Email:</strong> ${jsonData.email}</p>
+                                <p><strong>Address:</strong> ${jsonData.address}</p>
+                                <p><strong>Phone:</strong> ${jsonData.phone}</p>
+                                <p><strong>Website:</strong> <a href="${jsonData.website}">${jsonData.website}</a></p>
+                            `; // Create HTML content from JSON data
+                            const date = new Date().toISOString(); // Use current date for the post
+                            const folder = path.relative(postsDirPath, dir); // Get the folder name
+                            allPosts.push({ title, content, date, folder }); // Add post info
+                            totalPages++; // Increment total pages count for JSON files
+                        } else {
+                            nonPageFiles++; // Increment non-page files count for invalid JSON structure
+                        }
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
+                        const title = path.basename(file.name, '.md'); // Use the file name as the title
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
+                        const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ content, folder }); // Add post info without title
+                        allPosts.push({ title, content, date, folder }); // Add post info
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
@@ -50,112 +67,74 @@ async function fetchPosts() {
 
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
-// Function to format JSON content into HTML
-const formatJson = (jsonString) => {
-    try {
-        const jsonData = JSON.parse(jsonString);
-        return `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`; // Format JSON with indentation
-    } catch (error) {
-        console.error('Error parsing JSON:', error);
-        return '<p>Error parsing JSON data.</p>';
-    }
-};
 
-// Function to write a single post to a file
-const writePost = async (post, index) => {
-    const { content, folder, isJson } = post;
-    const fileName = `post-${index + 1}.html`; // Use incremental numbers for file names
-
-    const folderPath = path.join(outputDir, folder); // Create a path for the folder
-    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
-
-    const filePath = path.join(folderPath, fileName); // Full path for the file
-
-    // Write HTML content for both JSON and Markdown files
-    const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post ${index + 1}</title>
-</head>
-<body>
-    <h1>Post ${index + 1}</h1>
-    <div>${isJson ? formatJson(content) : content}</div> 
-</body>
-</html>
-`;
-
-    await fs.writeFile(filePath, htmlContent);
-};
-
-// The rest of your fetchPosts function remains unchanged
+        const titleCount = {}; // Object to keep track of title occurrences
 
         // Function to write a single post to a file
-  // Function to write a single post to a file
-const writePost = async (post, index) => {
-    const { content, folder, isJson } = post;
-    const fileName = `post-${index + 1}.html`; // Use incremental numbers for file names
+        const writePost = async (post) => {
+            const { title, content, folder } = post;
+            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+            let fileName = `${baseFileName}.html`; // Start with the base file name
+            let count = 1;
 
-    const folderPath = path.join(outputDir, folder); // Create a path for the folder
-    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+            // Check for duplicates and modify the file name if necessary
+            while (titleCount[fileName]) {
+                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+                count++;
+            }
 
-    const filePath = path.join(folderPath, fileName); // Full path for the file
+            titleCount[fileName] = true; // Mark this file name as used
 
-    // Write HTML content for both JSON and Markdown files
-    const htmlContent = `<!DOCTYPE html>
+                        const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+
+            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+
+            const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Post ${index + 1}</title>
+    <title>${title}</title>
 </head>
 <body>
-    <h1>Post ${index + 1}</h1>
-    <div>${isJson ? formatJson(content) : content}</div> 
+    <h1>${title}</h1>
+    <div>${content}</div> 
 </body>
 </html>
 `;
 
-// Function to format JSON content into HTML
-const formatJson = (jsonString) => {
-    try {
-        const jsonData = JSON.parse(jsonString);
-        return `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`; // Format JSON with indentation
-    } catch (error) {
-        console.error('Error parsing JSON:', error);
-        return '<p>Error parsing JSON data.</p>';
-    }
-};
-
-await fs.writeFile(filePath, htmlContent);
-};
-
+            await fs.writeFile(filePath, htmlContent);
+            
+            // Log the relative URL
+            const relativeUrl = `${folder}/${fileName}`;
+            console.log(`Created post: ${relativeUrl}`);
+        };
 
         // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
-                await Promise.all(chunk.map((post, index) => writePost(post, i + index)));
+                await Promise.all(chunk.map(writePost));
             }
         };
 
         // Start processing posts
-        const startTime = Date.now();
         await processPosts();
-        const endTime = Date.now();
 
-        // Log the statistics
+        // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
-        console.log(`Total Posts Created: ${allPosts.length}`);
-        console.log(`Total Build Time: ${endTime - startTime} ms`); // Log total build time
-               console.log(`Total JSON Files Processed: ${nonPageFiles}`);
-        console.log(`Total Static Files Ignored: ${staticFiles}`);
+        console.log(`Total Pages: ${totalPages}`);
+        console.log(`Non-page Files: ${nonPageFiles}`);
+        console.log(`Static Files: ${staticFiles}`);
+        console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
         console.error('Error:', err);
     }
 }
 
-// Start the fetchPosts function
+// Start the timer to measure build time
+const startTime = Date.now();
 fetchPosts();
+
