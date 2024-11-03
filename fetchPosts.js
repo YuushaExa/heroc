@@ -117,9 +117,6 @@ async function fetchPosts() {
 
             await fs.writeFile(filePath, htmlContent);
             
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
         };
 
         // Process posts with limited concurrency
