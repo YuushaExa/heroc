@@ -96,13 +96,9 @@ async function fetchPosts() {
 `;
 
             await fs.writeFile(filePath, htmlContent);
-            
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
         };
 
-        // Process posts with limited concurrency
+               // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
@@ -116,13 +112,6 @@ async function fetchPosts() {
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
-        console.log(`Paginator Pages: ${paginatorPages}`);
-        console.log(`Non-page Files: ${nonPageFiles}`);
-        console.log(`Static Files: ${staticFiles}`);
-        console.log(`Processed Images: ${processedImages}`);
-        console.log(`Aliases: ${aliases}`);
-        console.log(`Sitemaps: ${sitemaps}`);
-        console.log(`Cleaned: ${cleaned}`);
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
