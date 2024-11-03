@@ -40,7 +40,7 @@ async function fetchPosts() {
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const name = path.basename(file.name, '.md'); // Use the file name as the title
+                        const name = path.basename(file.name, '.md'); // Use the file name as the name
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
@@ -59,7 +59,7 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const titleCount = {}; // Object to keep track of title occurrences
+        const nameCount = {}; // Object to keep track of name occurrences
 
         // Function to write a single post to a file
         const writePost = async (post) => {
@@ -69,12 +69,12 @@ async function fetchPosts() {
             let count = 1;
 
             // Check for duplicates and modify the file name if necessary
-            while (titleCount[fileName]) {
+            while (nameCount[fileName]) {
                 fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
                 count++;
             }
 
-            titleCount[fileName] = true; // Mark this file name as used
+            nameCount[fileName] = true; // Mark this file name as used
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
@@ -86,7 +86,7 @@ async function fetchPosts() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${name}</title>
+    <name>${name}</name>
 </head>
 <body>
         <h1>${name}</h1>
