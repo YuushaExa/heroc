@@ -31,7 +31,7 @@ jobs:
           node-version: '20'  # Specify the Node.js version
 
       - name: Run fetchPosts script
-        run: node fetchPosts.js  # Your script to generate posts
+        run: node --prof fetchPosts.js  # Your script to generate posts
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
