@@ -11,7 +11,6 @@ import (
 )
 
 type Post struct {
-    Title   string `json:"title"`
     Content string `json:"content"`
     Date    string `json:"date"`
     Folder  string `json:"folder"`
@@ -65,7 +64,7 @@ func main() {
             folder := filepath.Dir(path)
             date := time.Now().Format(time.RFC3339)
             content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Title: "", Content: content, Date: date, Folder: folder})
+            allPosts = append(allPosts, Post{Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
@@ -84,7 +83,7 @@ func main() {
 
     for i, post := range allPosts {
         // Use an incrementing counter for the post title
-        postTitle := fmt.Sprintf("Post %d", i+1)
+        postTitle := fmt.Sprintf("Post %d", i+1) // Title as "Post X"
         baseFileName := strings.ToLower(strings.ReplaceAll(postTitle, " ", "-"))
         fileName := fmt.Sprintf("%s.html", baseFileName)
 
@@ -102,7 +101,7 @@ func main() {
 </head>
 <body>
     <h1>%s</h1>
-    <div><pre>%s</pre></div> 
+    <div>%s</div> 
 </body>
 </html>
 `, postTitle, postTitle, post.Content)
