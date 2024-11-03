@@ -62,11 +62,10 @@ func main() {
             if err != nil {
                 return err
             }
-            title := strings.TrimSuffix(info.Name(), ".md")
             folder := filepath.Dir(path)
             date := time.Now().Format(time.RFC3339)
             content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Title: title, Content: content, Date: date, Folder: folder})
+            allPosts = append(allPosts, Post{Title: "", Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
@@ -83,19 +82,11 @@ func main() {
     // Create output directory
     os.MkdirAll(outputDir, os.ModePerm)
 
-    titleCount := make(map[string]bool)
-
-    for _, post := range allPosts {
-        baseFileName := strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
+    for i, post := range allPosts {
+        // Use an incrementing counter for the post title
+        postTitle := fmt.Sprintf("Post %d", i+1)
+        baseFileName := strings.ToLower(strings.ReplaceAll(postTitle, " ", "-"))
         fileName := fmt.Sprintf("%s.html", baseFileName)
-        count := 1
-
-        // Check for duplicates and modify the file name if necessary
-        for titleCount[fileName] {
-            fileName = fmt.Sprintf("%s-%d.html", baseFileName, count)
-            count++
-        }
-        titleCount[fileName] = true
 
         folderPath := filepath.Join(outputDir, post.Folder)
         os.MkdirAll(folderPath, os.ModePerm)
@@ -114,17 +105,13 @@ func main() {
     <div>%s</div> 
 </body>
 </html>
-`, post.Title, post.Title, post.Content)
+`, postTitle, postTitle, post.Content)
 
         err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
         if err != nil {
             fmt.Println("Error writing file:", err)
             return
         }
-
-        // Log the relative URL
-        relativeUrl := filepath.Join(post.Folder, fileName)
-        fmt.Println("Created post:", relativeUrl)
     }
 
     // After processing all posts, log the statistics
