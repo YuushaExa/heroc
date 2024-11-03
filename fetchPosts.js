@@ -4,7 +4,6 @@ const path = require('path');
 // Load the markdown-it library from the local file
 const MarkdownIt = require('./libs/markdown-it'); // Adjust the path as necessary
 const md = new MarkdownIt(); // Create an instance of markdown-it
-
 const postsDirPath = path.join(__dirname, 'posts'); // Directory containing JSON and MD files
 const MAX_CONCURRENT_WRITES = 200; // Maximum concurrent writes
 
@@ -60,20 +59,17 @@ async function fetchPosts() {
         await fs.mkdir(outputDir, { recursive: true });
 
         const titleCount = {}; // Object to keep track of title occurrences
-
         // Function to write a single post to a file
         const writePost = async (post) => {
             const { title, content, folder } = post;
             const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
             let fileName = `${baseFileName}.html`; // Start with the base file name
             let count = 1;
-
             // Check for duplicates and modify the file name if necessary
             while (titleCount[fileName]) {
                 fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
                 count++;
             }
-
             titleCount[fileName] = true; // Mark this file name as used
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
@@ -96,7 +92,7 @@ async function fetchPosts() {
 `;
 
             await fs.writeFile(filePath, htmlContent);
-            
+
             // Log the relative URL
             const relativeUrl = `${folder}/${fileName}`;
             console.log(`Created post: ${relativeUrl}`);
