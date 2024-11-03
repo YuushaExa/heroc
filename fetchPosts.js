@@ -19,6 +19,8 @@ async function fetchPosts() {
         let sitemaps = 0; // Count of sitemaps (if applicable)
         let cleaned = 0; // Count of cleaned files (if applicable)
         let skippedPosts = 0; // Count of skipped posts
+        const skippedPostUrls = []; // Array to store URLs of skipped posts
+        let publishedPosts = 0; // Count of published posts
 
         // Function to read JSON and MD files recursively
         async function readFiles(dir) {
@@ -67,6 +69,8 @@ async function fetchPosts() {
             // Check if title is undefined
             if (typeof title === 'undefined') {
                 skippedPosts++; // Increment the skipped posts count
+                const baseFileName = folder ? `${folder}/${title}` : title; // Create a base URL for the skipped post
+                skippedPostUrls.push(baseFileName); // Store the skipped post URL
                 return; // Skip this post if title is undefined
             }
 
@@ -80,13 +84,12 @@ async function fetchPosts() {
                 count++;
             }
             titleCount[fileName] = true; // Mark this file name as used
-
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
             const filePath = path.join(folderPath, fileName); // Full path for the HTML file
 
-                     const htmlContent = `<!DOCTYPE html>
+            const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -101,6 +104,7 @@ async function fetchPosts() {
 `;
 
             await fs.writeFile(filePath, htmlContent);
+            publishedPosts++; // Increment the published posts count
         };
 
         // Process posts with limited concurrency
@@ -117,6 +121,7 @@ async function fetchPosts() {
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
+        console.log(`Published Posts: ${publishedPosts}`); // Log the count of published posts
         console.log(`Paginator Pages: ${paginatorPages}`);
         console.log(`Non-page Files: ${nonPageFiles}`);
         console.log(`Static Files: ${staticFiles}`);
@@ -125,6 +130,7 @@ async function fetchPosts() {
         console.log(`Sitemaps: ${sitemaps}`);
         console.log(`Cleaned: ${cleaned}`);
         console.log(`Skipped Posts: ${skippedPosts}`); // Log the count of skipped posts
+        console.log(`Skipped Post URLs: ${skippedPostUrls.slice(0, 3).join(', ')}`); // Log the first 3 skipped post URLs
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
