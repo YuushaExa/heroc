@@ -131,9 +131,6 @@ func main() {
             return
         }
 
-        // Log the relative URL
-        relativeUrl := filepath.Join(post.Folder, fileName)
-        fmt.Println("Created post:", relativeUrl)
     }
 
     // After processing all posts, log the statistics
