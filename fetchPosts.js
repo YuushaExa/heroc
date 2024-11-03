@@ -12,8 +12,13 @@ async function fetchPosts() {
     try {
         const allPosts = [];
         let totalPages = 0;
+        let paginatorPages = 0; // You can implement pagination logic if needed
         let nonPageFiles = 0; // Count of non-page files
         let staticFiles = 0; // Count of static files
+        let processedImages = 0; // Count of processed images (if applicable)
+        let aliases = 0; // Count of aliases (if applicable)
+        let sitemaps = 0; // Count of sitemaps (if applicable)
+        let cleaned = 0; // Count of cleaned files (if applicable)
 
         // Function to read JSON and MD files recursively
         async function readFiles(dir) {
@@ -24,40 +29,15 @@ async function fetchPosts() {
                     // Recursively read subdirectories
                     await readFiles(filePath);
                 } else if (file.isFile()) {
-  if (file.name.endsWith('.json')) {
-    // Read and parse JSON files
-    const data = await fs.readFile(filePath, 'utf8');
-    const jsonData = JSON.parse(data);
-
-
-    // Check if jsonData is an array
-    if (Array.isArray(jsonData)) {
-        for (const item of jsonData) {
-            // Check if the item has the required fields
-            if (item.name && item.email) {
-                const title = item.name || 'Untitled'; // Use the name as the title or default to 'Untitled'
-                const content = `
-                    <h2>Contact Information</h2>
-                    <p><strong>Email:</strong> ${item.email}</p>
-                    <p><strong>Address:</strong> ${item.address}</p>
-                    <p><strong>Phone:</strong> ${item.phone}</p>
-                    <p><strong>Website:</strong> <a href="${item.website}">${item.website}</a></p>
-                `; // Create HTML content from JSON data
-                const date = new Date().toISOString(); // Use current date for the post
-                const folder = path.relative(postsDirPath, dir); // Get the folder name
-                allPosts.push({ title, content, date, folder }); // Add post info
-                totalPages++; // Increment total pages count for JSON files
-            } else {
-                nonPageFiles++; // Increment non-page files count for invalid JSON structure
-            }
-        }
-    } else {
-        console.log(`Ignored JSON file because it is not an array: ${filePath}`);
-        nonPageFiles++; // Increment non-page files count for invalid JSON structure
-    }
-}
-
- else if (file.name.endsWith('.md')) {
+                    if (file.name.endsWith('.json')) {
+                        // Read and parse JSON files
+                        const data = await fs.readFile(filePath, 'utf8');
+                        const posts = JSON.parse(data);
+                        const folder = path.relative(postsDirPath, dir); // Get the folder name
+                        allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
+                        totalPages += posts.length; // Increment total pages by the number of posts in the JSON file
+                        nonPageFiles++; // Increment non-page files count
+                    } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
                         const title = path.basename(file.name, '.md'); // Use the file name as the title
@@ -96,7 +76,7 @@ async function fetchPosts() {
 
             titleCount[fileName] = true; // Mark this file name as used
 
-                        const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
             const filePath = path.join(folderPath, fileName); // Full path for the HTML file
@@ -109,7 +89,7 @@ async function fetchPosts() {
     <title>${title}</title>
 </head>
 <body>
-    <h1>${title}</h1>
+        <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
@@ -117,6 +97,9 @@ async function fetchPosts() {
 
             await fs.writeFile(filePath, htmlContent);
             
+            // Log the relative URL
+            const relativeUrl = `${folder}/${fileName}`;
+            console.log(`Created post: ${relativeUrl}`);
         };
 
         // Process posts with limited concurrency
@@ -133,8 +116,13 @@ async function fetchPosts() {
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
+        console.log(`Paginator Pages: ${paginatorPages}`);
         console.log(`Non-page Files: ${nonPageFiles}`);
         console.log(`Static Files: ${staticFiles}`);
+        console.log(`Processed Images: ${processedImages}`);
+        console.log(`Aliases: ${aliases}`);
+        console.log(`Sitemaps: ${sitemaps}`);
+        console.log(`Cleaned: ${cleaned}`);
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
@@ -145,4 +133,3 @@ async function fetchPosts() {
 // Start the timer to measure build time
 const startTime = Date.now();
 fetchPosts();
-
