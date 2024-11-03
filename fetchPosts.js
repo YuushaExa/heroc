@@ -24,32 +24,41 @@ async function fetchPosts() {
                     // Recursively read subdirectories
                     await readFiles(filePath);
                 } else if (file.isFile()) {
-    if (file.name.endsWith('.json')) {
+  if (file.name.endsWith('.json')) {
     // Read and parse JSON files
     const data = await fs.readFile(filePath, 'utf8');
     console.log(`Reading JSON file: ${filePath}`); // Log the file being read
     const jsonData = JSON.parse(data);
     console.log('Parsed JSON data:', jsonData); // Log the parsed JSON data
 
-    // Check if the JSON structure matches the expected format
-    if (jsonData.name && jsonData.email) {
-        const title = jsonData.name || 'Untitled'; // Use the name as the title or default to 'Untitled'
-        const content = `
-            <h2>Contact Information</h2>
-            <p><strong>Email:</strong> ${jsonData.email}</p>
-            <p><strong>Address:</strong> ${jsonData.address}</p>
-            <p><strong>Phone:</strong> ${jsonData.phone}</p>
-            <p><strong>Website:</strong> <a href="${jsonData.website}">${jsonData.website}</a></p>
-        `; // Create HTML content from JSON data
-        const date = new Date().toISOString(); // Use current date for the post
-        const folder = path.relative(postsDirPath, dir); // Get the folder name
-        allPosts.push({ title, content, date, folder }); // Add post info
-        totalPages++; // Increment total pages count for JSON files
+    // Check if jsonData is an array
+    if (Array.isArray(jsonData)) {
+        for (const item of jsonData) {
+            // Check if the item has the required fields
+            if (item.name && item.email) {
+                const title = item.name || 'Untitled'; // Use the name as the title or default to 'Untitled'
+                const content = `
+                    <h2>Contact Information</h2>
+                    <p><strong>Email:</strong> ${item.email}</p>
+                    <p><strong>Address:</strong> ${item.address}</p>
+                    <p><strong>Phone:</strong> ${item.phone}</p>
+                    <p><strong>Website:</strong> <a href="${item.website}">${item.website}</a></p>
+                `; // Create HTML content from JSON data
+                const date = new Date().toISOString(); // Use current date for the post
+                const folder = path.relative(postsDirPath, dir); // Get the folder name
+                allPosts.push({ title, content, date, folder }); // Add post info
+                totalPages++; // Increment total pages count for JSON files
+            } else {
+                nonPageFiles++; // Increment non-page files count for invalid JSON structure
+                console.log(`Ignored item due to invalid structure:`, item); // Log ignored items
+            }
+        }
     } else {
+        console.log(`Ignored JSON file because it is not an array: ${filePath}`);
         nonPageFiles++; // Increment non-page files count for invalid JSON structure
-        console.log(`Ignored JSON file due to invalid structure: ${filePath}`); // Log ignored files
     }
 }
+
  else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
