@@ -11,12 +11,8 @@ import (
 )
 
 type Post struct {
-    Name    string `json:"name"`
-    Email   string `json:"email"`
-    Address string `json:"address"`
-    Phone   string `json:"phone"`
-    Website string `json:"website"`
-    Content string // Added Content field for Markdown content
+    Title   string `json:"title"`
+    Content string `json:"content"`
     Date    string `json:"date"`
     Folder  string `json:"folder"`
 }
@@ -55,7 +51,6 @@ func main() {
             folder := filepath.Dir(path)
             for i := range posts {
                 posts[i].Folder = folder
-                posts[i].Date = time.Now().Format(time.RFC3339) // Set the date to the current time
                 allPosts = append(allPosts, posts[i])
             }
             totalPages += len(posts)
@@ -71,7 +66,7 @@ func main() {
             folder := filepath.Dir(path)
             date := time.Now().Format(time.RFC3339)
             content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Name: title, Content: content, Date: date, Folder: folder})
+            allPosts = append(allPosts, Post{Title: title, Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
@@ -91,7 +86,7 @@ func main() {
     titleCount := make(map[string]bool)
 
     for _, post := range allPosts {
-        baseFileName := strings.ToLower(strings.ReplaceAll(post.Name, " ", "-"))
+        baseFileName := strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
         fileName := fmt.Sprintf("%s.html", baseFileName)
         count := 1
 
@@ -116,21 +111,20 @@ func main() {
 </head>
 <body>
     <h1>%s</h1>
-    <p>Email: %s</p>
-    <p>Address: %s</p>
-    <p>Phone: %s</p>
-    <p>Website: <a href="%s">%s</a></p>
     <div>%s</div> 
 </body>
 </html>
-`, post.Name, post.Name, post.Email, post.Address, post.Phone, post.Website, post.Website, post.Content)
+`, post.Title, post.Title, post.Content)
 
-                err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
+        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
         if err != nil {
             fmt.Println("Error writing file:", err)
             return
         }
 
+        // Log the relative URL
+        relativeUrl := filepath.Join(post.Folder, fileName)
+        fmt.Println("Created post:", relativeUrl)
     }
 
     // After processing all posts, log the statistics
