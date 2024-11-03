@@ -65,7 +65,6 @@ const writePost = async (post) => {
 
     // Check if title is undefined
     if (typeof title === 'undefined') {
-        console.error('Post title is undefined, skipping post:', post); // Log the post that is being skipped
         return; // Skip this post if title is undefined
     }
 
@@ -101,9 +100,6 @@ const writePost = async (post) => {
 
     await fs.writeFile(filePath, htmlContent);
 
-    // Log the relative URL
-    const relativeUrl = `${folder}/${fileName}`;
-    console.log(`Created post: ${relativeUrl}`);
 };
 
 
