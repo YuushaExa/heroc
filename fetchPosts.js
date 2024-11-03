@@ -24,29 +24,33 @@ async function fetchPosts() {
                     // Recursively read subdirectories
                     await readFiles(filePath);
                 } else if (file.isFile()) {
-                    if (file.name.endsWith('.json')) {
-                        // Read and parse JSON files
-                        const data = await fs.readFile(filePath, 'utf8');
-                        const jsonData = JSON.parse(data);
+    if (file.name.endsWith('.json')) {
+    // Read and parse JSON files
+    const data = await fs.readFile(filePath, 'utf8');
+    console.log(`Reading JSON file: ${filePath}`); // Log the file being read
+    const jsonData = JSON.parse(data);
+    console.log('Parsed JSON data:', jsonData); // Log the parsed JSON data
 
-                        // Check if the JSON structure matches the expected format
-                        if (jsonData.name && jsonData.email) {
-                            const title = jsonData.name; // Use the name as the title
-                            const content = `
-                                <h2>Contact Information</h2>
-                                <p><strong>Email:</strong> ${jsonData.email}</p>
-                                <p><strong>Address:</strong> ${jsonData.address}</p>
-                                <p><strong>Phone:</strong> ${jsonData.phone}</p>
-                                <p><strong>Website:</strong> <a href="${jsonData.website}">${jsonData.website}</a></p>
-                            `; // Create HTML content from JSON data
-                            const date = new Date().toISOString(); // Use current date for the post
-                            const folder = path.relative(postsDirPath, dir); // Get the folder name
-                            allPosts.push({ title, content, date, folder }); // Add post info
-                            totalPages++; // Increment total pages count for JSON files
-                        } else {
-                            nonPageFiles++; // Increment non-page files count for invalid JSON structure
-                        }
-                    } else if (file.name.endsWith('.md')) {
+    // Check if the JSON structure matches the expected format
+    if (jsonData.name && jsonData.email) {
+        const title = jsonData.name || 'Untitled'; // Use the name as the title or default to 'Untitled'
+        const content = `
+            <h2>Contact Information</h2>
+            <p><strong>Email:</strong> ${jsonData.email}</p>
+            <p><strong>Address:</strong> ${jsonData.address}</p>
+            <p><strong>Phone:</strong> ${jsonData.phone}</p>
+            <p><strong>Website:</strong> <a href="${jsonData.website}">${jsonData.website}</a></p>
+        `; // Create HTML content from JSON data
+        const date = new Date().toISOString(); // Use current date for the post
+        const folder = path.relative(postsDirPath, dir); // Get the folder name
+        allPosts.push({ title, content, date, folder }); // Add post info
+        totalPages++; // Increment total pages count for JSON files
+    } else {
+        nonPageFiles++; // Increment non-page files count for invalid JSON structure
+        console.log(`Ignored JSON file due to invalid structure: ${filePath}`); // Log ignored files
+    }
+}
+ else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
                         const title = path.basename(file.name, '.md'); // Use the file name as the title
