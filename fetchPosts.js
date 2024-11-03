@@ -52,17 +52,18 @@ async function fetchPosts() {
         await fs.mkdir(outputDir, { recursive: true });
 
         // Function to write a single post to a file
-        const writePost = async (post, index) => {
-            const { content, folder, isJson } = post;
-            const fileName = isJson ? `post-${index + 1}.html` : `post-${index + 1}.html`; // Use incremental numbers for file names
+  // Function to write a single post to a file
+const writePost = async (post, index) => {
+    const { content, folder, isJson } = post;
+    const fileName = `post-${index + 1}.html`; // Use incremental numbers for file names
 
-            const folderPath = path.join(outputDir, folder); // Create a path for the folder
-            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+    const folderPath = path.join(outputDir, folder); // Create a path for the folder
+    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
-            const filePath = path.join(folderPath, fileName); // Full path for the file
+    const filePath = path.join(folderPath, fileName); // Full path for the file
 
-            // Write HTML content for both JSON and Markdown files
-            const htmlContent = `<!DOCTYPE html>
+    // Write HTML content for both JSON and Markdown files
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -71,13 +72,25 @@ async function fetchPosts() {
 </head>
 <body>
     <h1>Post ${index + 1}</h1>
-    <div>${isJson ? content : content}</div> 
+    <div>${isJson ? formatJson(content) : content}</div> 
 </body>
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
-        };
+// Function to format JSON content into HTML
+const formatJson = (jsonString) => {
+    try {
+        const jsonData = JSON.parse(jsonString);
+        return `<pre>${JSON.stringify(jsonData, null, 2)}</pre>`; // Format JSON with indentation
+    } catch (error) {
+        console.error('Error parsing JSON:', error);
+        return '<p>Error parsing JSON data.</p>';
+    }
+};
+
+await fs.writeFile(filePath, htmlContent);
+};
+
 
         // Process posts with limited concurrency
         const processPosts = async () => {
