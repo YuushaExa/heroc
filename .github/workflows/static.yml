@@ -35,7 +35,7 @@ jobs:
 
     - name: Build static site
       run: |
-        go build -o ssg
+        go build -o ssg 
         ./ssg
         
     - name: Setup Pages
