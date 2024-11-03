@@ -18,6 +18,7 @@ async function fetchPosts() {
         let aliases = 0; // Count of aliases (if applicable)
         let sitemaps = 0; // Count of sitemaps (if applicable)
         let cleaned = 0; // Count of cleaned files (if applicable)
+        let skippedPosts = 0; // Count of skipped posts
 
         // Function to read JSON and MD files recursively
         async function readFiles(dir) {
@@ -60,31 +61,32 @@ async function fetchPosts() {
 
         const titleCount = {}; // Object to keep track of title occurrences
         // Function to write a single post to a file
-const writePost = async (post) => {
-    const { title, content, folder } = post;
+        const writePost = async (post) => {
+            const { title, content, folder } = post;
 
-    // Check if title is undefined
-    if (typeof title === 'undefined') {
-        return; // Skip this post if title is undefined
-    }
+            // Check if title is undefined
+            if (typeof title === 'undefined') {
+                skippedPosts++; // Increment the skipped posts count
+                return; // Skip this post if title is undefined
+            }
 
-    const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
-    let fileName = `${baseFileName}.html`; // Start with the base file name
-    let count = 1;
+            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+            let fileName = `${baseFileName}.html`; // Start with the base file name
+            let count = 1;
 
-    // Check for duplicates and modify the file name if necessary
-    while (titleCount[fileName]) {
-        fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-        count++;
-    }
-    titleCount[fileName] = true; // Mark this file name as used
+            // Check for duplicates and modify the file name if necessary
+            while (titleCount[fileName]) {
+                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+                count++;
+            }
+            titleCount[fileName] = true; // Mark this file name as used
 
-    const folderPath = path.join(outputDir, folder); // Create a path for the folder
-    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+            const folderPath = path.join(outputDir, folder); // Create a path for the folder
+            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
-    const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
 
-    const htmlContent = `<!DOCTYPE html>
+                     const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -98,10 +100,8 @@ const writePost = async (post) => {
 </html>
 `;
 
-    await fs.writeFile(filePath, htmlContent);
-
-};
-
+            await fs.writeFile(filePath, htmlContent);
+        };
 
         // Process posts with limited concurrency
         const processPosts = async () => {
@@ -124,6 +124,7 @@ const writePost = async (post) => {
         console.log(`Aliases: ${aliases}`);
         console.log(`Sitemaps: ${sitemaps}`);
         console.log(`Cleaned: ${cleaned}`);
+        console.log(`Skipped Posts: ${skippedPosts}`); // Log the count of skipped posts
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
@@ -134,3 +135,4 @@ const writePost = async (post) => {
 // Start the timer to measure build time
 const startTime = Date.now();
 fetchPosts();
+
