@@ -27,9 +27,8 @@ async function fetchPosts() {
   if (file.name.endsWith('.json')) {
     // Read and parse JSON files
     const data = await fs.readFile(filePath, 'utf8');
-    console.log(`Reading JSON file: ${filePath}`); // Log the file being read
     const jsonData = JSON.parse(data);
-    console.log('Parsed JSON data:', jsonData); // Log the parsed JSON data
+
 
     // Check if jsonData is an array
     if (Array.isArray(jsonData)) {
