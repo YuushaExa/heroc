@@ -16,6 +16,7 @@ type Post struct {
     Address string `json:"address"`
     Phone   string `json:"phone"`
     Website string `json:"website"`
+    Content string // Added Content field for Markdown content
     Date    string `json:"date"`
     Folder  string `json:"folder"`
 }
@@ -70,7 +71,7 @@ func main() {
             folder := filepath.Dir(path)
             date := time.Now().Format(time.RFC3339)
             content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Name: title, Email: "", Address: "", Phone: "", Website: "", Date: date, Folder: folder})
+            allPosts = append(allPosts, Post{Name: title, Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
@@ -119,17 +120,18 @@ func main() {
     <p>Address: %s</p>
     <p>Phone: %s</p>
     <p>Website: <a href="%s">%s</a></p>
+    <div>%s</div> 
 </body>
 </html>
-`, post.Name, post.Name, post.Email, post.Address, post.Phone, post.Website, post.Website)
+`, post.Name, post.Name, post.Email, post.Address, post.Phone, post.Website, post.Website, post.Content)
 
-        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
+                err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
         if err != nil {
             fmt.Println("Error writing file:", err)
             return
         }
 
-               // Log the relative URL
+        // Log the relative URL
         relativeUrl := filepath.Join(post.Folder, fileName)
         fmt.Println("Created post:", relativeUrl)
     }
