@@ -11,16 +11,21 @@ import (
 )
 
 type Post struct {
+    Title   string `json:"title"`
     Content string `json:"content"`
+    Date    string `json:"date"`
+    Folder  string `json:"folder"`
 }
 
 func main() {
     startTime := time.Now()
     postsDirPath := "./posts" // Directory containing JSON and MD files
-    outputDir := "./public"    // Output directory for generated files
+    outputDir := "./public"    // Output directory for generated HTML files
 
     allPosts := []Post{}
     totalPages := 0
+    nonPageFiles := 0
+    staticFiles := 0
 
     err := filepath.Walk(postsDirPath, func(path string, info os.FileInfo, err error) error {
         if err != nil {
@@ -43,8 +48,13 @@ func main() {
             if err != nil {
                 return err
             }
-            allPosts = append(allPosts, posts...)
+            folder := filepath.Dir(path)
+            for i := range posts {
+                posts[i].Folder = folder
+                allPosts = append(allPosts, posts[i])
+            }
             totalPages += len(posts)
+            nonPageFiles++
 
         case strings.HasSuffix(info.Name(), ".md"):
             // Read Markdown files
@@ -52,12 +62,15 @@ func main() {
             if err != nil {
                 return err
             }
+            title := strings.TrimSuffix(info.Name(), ".md")
+            folder := filepath.Dir(path)
+            date := time.Now().Format(time.RFC3339)
             content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Content: content})
+            allPosts = append(allPosts, Post{Title: title, Content: content, Date: date, Folder: folder})
             totalPages++
 
         default:
-            // Ignore other file types
+            staticFiles++
         }
         return nil
     })
@@ -70,22 +83,54 @@ func main() {
     // Create output directory
     os.MkdirAll(outputDir, os.ModePerm)
 
-    for i, post := range allPosts {
-        // Use an incrementing counter for the post title
-        fileName := fmt.Sprintf("post-%d.txt", i+1) // Output as .txt files
+    titleCount := make(map[string]bool)
 
-        filePath := filepath.Join(outputDir, fileName)
+    for _, post := range allPosts {
+        baseFileName := strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
+        fileName := fmt.Sprintf("%s.html", baseFileName)
+        count := 1
 
-        // Write only the raw content to the file
-        err := ioutil.WriteFile(filePath, []byte(post.Content), 0644)
+        // Check for duplicates and modify the file name if necessary
+        for titleCount[fileName] {
+            fileName = fmt.Sprintf("%s-%d.html", baseFileName, count)
+            count++
+        }
+        titleCount[fileName] = true
+
+        folderPath := filepath.Join(outputDir, post.Folder)
+        os.MkdirAll(folderPath, os.ModePerm)
+
+        filePath := filepath.Join(folderPath, fileName)
+
+        htmlContent := fmt.Sprintf(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>%s</title>
+</head>
+<body>
+    <h1>%s</h1>
+    <div>%s</div> 
+</body>
+</html>
+`, post.Title, post.Title, post.Content)
+
+        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
         if err != nil {
             fmt.Println("Error writing file:", err)
             return
         }
+
+        // Log the relative URL
+        relativeUrl := filepath.Join(post.Folder, fileName)
+        fmt.Println("Created post:", relativeUrl)
     }
 
     // After processing all posts, log the statistics
     fmt.Println("--- Build Statistics ---")
     fmt.Printf("Total Pages: %d\n", totalPages)
+    fmt.Printf("Non-page Files: %d\n", nonPageFiles)
+    fmt.Printf("Static Files: %d\n", staticFiles)
     fmt.Printf("Total Build Time: %v\n", time.Since(startTime))
 }
