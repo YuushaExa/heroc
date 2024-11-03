@@ -40,6 +40,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
 
+    - name: Download Go modules
+      run: go mod download
+
     - name: Build static site
       run: |
         go build -o ssg
