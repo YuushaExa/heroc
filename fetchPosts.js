@@ -60,24 +60,32 @@ async function fetchPosts() {
 
         const titleCount = {}; // Object to keep track of title occurrences
         // Function to write a single post to a file
-        const writePost = async (post) => {
-            const { title, content, folder } = post;
-            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
-            let fileName = `${baseFileName}.html`; // Start with the base file name
-            let count = 1;
-            // Check for duplicates and modify the file name if necessary
-            while (titleCount[fileName]) {
-                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-                count++;
-            }
-            titleCount[fileName] = true; // Mark this file name as used
+const writePost = async (post) => {
+    const { title, content, folder } = post;
 
-            const folderPath = path.join(outputDir, folder); // Create a path for the folder
-            await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+    // Check if title is undefined
+    if (typeof title === 'undefined') {
+        console.error('Post title is undefined, skipping post:', post); // Log the post that is being skipped
+        return; // Skip this post if title is undefined
+    }
 
-            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+    const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+    let fileName = `${baseFileName}.html`; // Start with the base file name
+    let count = 1;
 
-            const htmlContent = `<!DOCTYPE html>
+    // Check for duplicates and modify the file name if necessary
+    while (titleCount[fileName]) {
+        fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+        count++;
+    }
+    titleCount[fileName] = true; // Mark this file name as used
+
+    const folderPath = path.join(outputDir, folder); // Create a path for the folder
+    await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
+
+    const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+
+    const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -85,18 +93,19 @@ async function fetchPosts() {
     <title>${title}</title>
 </head>
 <body>
-        <h1>${title}</h1>
+    <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
+    await fs.writeFile(filePath, htmlContent);
 
-            // Log the relative URL
-            const relativeUrl = `${folder}/${fileName}`;
-            console.log(`Created post: ${relativeUrl}`);
-        };
+    // Log the relative URL
+    const relativeUrl = `${folder}/${fileName}`;
+    console.log(`Created post: ${relativeUrl}`);
+};
+
 
         // Process posts with limited concurrency
         const processPosts = async () => {
