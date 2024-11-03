@@ -40,11 +40,11 @@ async function fetchPosts() {
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const name = path.basename(file.name, '.md'); // Use the file name as the name
+                        const title = path.basename(file.name, '.md'); // Use the file name as the title
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ name, content, date, folder }); // Add post info
+                        allPosts.push({ title, content, date, folder }); // Add post info
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
@@ -59,38 +59,22 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const nameCount = {}; // Object to keep track of name occurrences
+        const titleCount = {}; // Object to keep track of title occurrences
 
-const nameCount = {}; // Initialize nameCount to track existing file names
+        // Function to write a single post to a file
+        const writePost = async (post) => {
+            const { date, content, folder } = post;
+            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+            let fileName = `${baseFileName}.html`; // Start with the base file name
+            let count = 1;
 
-const writePost = async (post) => {
-    const { name, title, content, folder } = post;
+            // Check for duplicates and modify the file name if necessary
+            while (titleCount[fileName]) {
+                fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
+                count++;
+            }
 
-    if (!name || !title || !content || !folder) {
-        throw new Error("Post must contain name, title, content, and folder.");
-    }
-
-    // Create a base file name using both name and title
-    const baseFileName = `${name.replace(/\s+/g, '-').toLowerCase()}-${title.replace(/\s+/g, '-').toLowerCase()}`; 
-    let fileName = `${baseFileName}.html`; // Start with the base file name
-    let count = 1;
-
-    // Check for duplicates and modify the file name if necessary
-    while (nameCount[fileName]) {
-        fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
-        count++;
-    }
-
-    // Mark the file name as used
-    nameCount[fileName] = true;
-
-    // Here you would write the content to the file (not shown)
-    // For example: await writeFile(`${folder}/${fileName}`, content);
-
-    return fileName; // Return the unique file name
-};
-
-            nameCount[fileName] = true; // Mark this file name as used
+            titleCount[fileName] = true; // Mark this file name as used
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
@@ -102,19 +86,23 @@ const writePost = async (post) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <name>${name}</name>
+    <title>${title}</title>
 </head>
 <body>
-        <h1>${name}</h1>
+        <h1>${title}</h1>
     <div>${content}</div> 
 </body>
 </html>
 `;
 
             await fs.writeFile(filePath, htmlContent);
+            
+            // Log the relative URL
+            const relativeUrl = `${folder}/${fileName}`;
+            console.log(`Created post: ${relativeUrl}`);
         };
 
-               // Process posts with limited concurrency
+        // Process posts with limited concurrency
         const processPosts = async () => {
             for (let i = 0; i < allPosts.length; i += MAX_CONCURRENT_WRITES) {
                 const chunk = allPosts.slice(i, i + MAX_CONCURRENT_WRITES);
@@ -128,6 +116,13 @@ const writePost = async (post) => {
         // After processing all posts, log the statistics
         console.log('--- Build Statistics ---');
         console.log(`Total Pages: ${totalPages}`);
+        console.log(`Paginator Pages: ${paginatorPages}`);
+        console.log(`Non-page Files: ${nonPageFiles}`);
+        console.log(`Static Files: ${staticFiles}`);
+        console.log(`Processed Images: ${processedImages}`);
+        console.log(`Aliases: ${aliases}`);
+        console.log(`Sitemaps: ${sitemaps}`);
+        console.log(`Cleaned: ${cleaned}`);
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
