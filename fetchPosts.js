@@ -49,7 +49,6 @@ async function fetchPosts() {
                 totalPages++; // Increment total pages count for JSON files
             } else {
                 nonPageFiles++; // Increment non-page files count for invalid JSON structure
-                console.log(`Ignored item due to invalid structure:`, item); // Log ignored items
             }
         }
     } else {
