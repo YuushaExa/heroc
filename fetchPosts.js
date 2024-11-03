@@ -44,7 +44,7 @@ async function fetchPosts() {
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ title, content, date, folder }); // Add post info
+                        allPosts.push({ name, content, date, folder }); // Add post info
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
