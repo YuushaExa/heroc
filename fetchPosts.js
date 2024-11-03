@@ -40,11 +40,11 @@ async function fetchPosts() {
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const title = path.basename(file.name, '.md'); // Use the file name as the title
+                        const date = path.basename(file.name, '.md'); // Use the file name as the date
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
                         const date = new Date().toISOString(); // Use current date for the post
                         const content = md.render(data); // Convert Markdown to HTML using markdown-it
-                        allPosts.push({ title, content, date, folder }); // Add post info
+                        allPosts.push({ date, content, date, folder }); // Add post info
                         totalPages++; // Increment total pages count for Markdown files
                     } else {
                         staticFiles++; // Increment static files count for other file types
@@ -59,22 +59,22 @@ async function fetchPosts() {
         const outputDir = path.join(__dirname, 'public'); // Directly point to the public directory
         await fs.mkdir(outputDir, { recursive: true });
 
-        const titleCount = {}; // Object to keep track of title occurrences
+        const dateCount = {}; // Object to keep track of date occurrences
 
         // Function to write a single post to a file
         const writePost = async (post) => {
             const { date, content, folder } = post;
-            const baseFileName = title.replace(/\s+/g, '-').toLowerCase(); // Base file name
+            const baseFileName = date.replace(/\s+/g, '-').toLowerCase(); // Base file name
             let fileName = `${baseFileName}.html`; // Start with the base file name
             let count = 1;
 
             // Check for duplicates and modify the file name if necessary
-            while (titleCount[fileName]) {
+            while (dateCount[fileName]) {
                 fileName = `${baseFileName}-${count}.html`; // Append counter to the file name
                 count++;
             }
 
-            titleCount[fileName] = true; // Mark this file name as used
+            dateCount[fileName] = true; // Mark this file name as used
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
@@ -86,10 +86,10 @@ async function fetchPosts() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
+    <date>${date}</date>
 </head>
 <body>
-        <h1>${title}</h1>
+        <h1>${date}</h1>
     <div>${content}</div> 
 </body>
 </html>
