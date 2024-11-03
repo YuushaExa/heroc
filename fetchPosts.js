@@ -19,7 +19,7 @@ async function fetchPosts() {
         let sitemaps = 0; // Count of sitemaps (if applicable)
         let cleaned = 0; // Count of cleaned files (if applicable)
         let skippedPosts = 0; // Count of skipped posts
-        const skippedPostUrls = []; // Array to store URLs of skipped posts
+        const skippedPostDetails = []; // Array to store details of skipped posts
         let publishedPosts = 0; // Count of published posts
 
         // Function to read JSON and MD files recursively
@@ -70,7 +70,7 @@ async function fetchPosts() {
             if (typeof title === 'undefined') {
                 skippedPosts++; // Increment the skipped posts count
                 const baseFileName = folder ? `${folder}/${title}` : title; // Create a base URL for the skipped post
-                skippedPostUrls.push(baseFileName); // Store the skipped post URL
+                skippedPostDetails.push({ url: baseFileName, reason: 'Title is undefined' }); // Store the skipped post URL and reason
                 return; // Skip this post if title is undefined
             }
 
@@ -84,6 +84,7 @@ async function fetchPosts() {
                 count++;
             }
             titleCount[fileName] = true; // Mark this file name as used
+
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
@@ -130,7 +131,13 @@ async function fetchPosts() {
         console.log(`Sitemaps: ${sitemaps}`);
         console.log(`Cleaned: ${cleaned}`);
         console.log(`Skipped Posts: ${skippedPosts}`); // Log the count of skipped posts
-        console.log(`Skipped Post URLs: ${skippedPostUrls.slice(0, 3).join(', ')}`); // Log the first 3 skipped post URLs
+
+        // Log the first skipped post URL and its reason, if any
+        if (skippedPostDetails.length > 0) {
+            const firstSkippedPost = skippedPostDetails[0];
+            console.log(`Skipped Post URL: ${firstSkippedPost.url}, Reason: ${firstSkippedPost.reason}`);
+        }
+
         console.log(`Total Build Time: ${Date.now() - startTime} ms`); // Log total build time
 
     } catch (err) {
@@ -141,4 +148,3 @@ async function fetchPosts() {
 // Start the timer to measure build time
 const startTime = Date.now();
 fetchPosts();
-
