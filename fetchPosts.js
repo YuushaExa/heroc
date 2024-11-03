@@ -25,12 +25,11 @@ async function fetchPosts() {
                     await readFiles(filePath);
                 } else if (file.isFile()) {
                     if (file.name.endsWith('.json')) {
-                        // Read and parse JSON files
+                        // Read and copy JSON files as raw files
                         const data = await fs.readFile(filePath, 'utf8');
-                        const posts = JSON.parse(data);
                         const folder = path.relative(postsDirPath, dir); // Get the folder name
-                        allPosts.push(...posts.map(post => ({ ...post, folder }))); // Add folder info
-                        totalPages += posts.length; // Increment total pages by the number of posts in the JSON file
+                        allPosts.push({ content: data, folder, isJson: true }); // Mark as JSON
+                        totalPages++; // Increment total pages count for JSON files
                         nonPageFiles++; // Increment non-page files count
                     } else if (file.name.endsWith('.md')) {
                         // Read Markdown files
@@ -55,15 +54,20 @@ async function fetchPosts() {
 
         // Function to write a single post to a file
         const writePost = async (post, index) => {
-            const { content, folder } = post;
-            const fileName = `post-${index + 1}.html`; // Use incremental numbers for file names
+            const { content, folder, isJson } = post;
+            const fileName = isJson ? `post-${index + 1}.json` : `post-${index + 1}.html`; // Use incremental numbers for file names
 
             const folderPath = path.join(outputDir, folder); // Create a path for the folder
             await fs.mkdir(folderPath, { recursive: true }); // Ensure the folder exists
 
-            const filePath = path.join(folderPath, fileName); // Full path for the HTML file
+            const filePath = path.join(folderPath, fileName); // Full path for the file
 
-            const htmlContent = `<!DOCTYPE html>
+            if (isJson) {
+                // Write JSON content directly
+                await fs.writeFile(filePath, content);
+            } else {
+                // Write HTML content for Markdown files
+                const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -77,7 +81,8 @@ async function fetchPosts() {
 </html>
 `;
 
-            await fs.writeFile(filePath, htmlContent);
+                await fs.writeFile(filePath, htmlContent);
+            }
         };
 
         // Process posts with limited concurrency
@@ -95,8 +100,10 @@ async function fetchPosts() {
 
         // Log the statistics
         console.log('--- Build Statistics ---');
-        console.log(`Total Posts Created: ${allPosts.length}`);
+               console.log(`Total Posts Created: ${allPosts.length}`);
         console.log(`Total Build Time: ${endTime - startTime} ms`); // Log total build time
+        console.log(`Total JSON Files Processed: ${nonPageFiles}`);
+        console.log(`Total Static Files Ignored: ${staticFiles}`);
 
     } catch (err) {
         console.error('Error:', err);
