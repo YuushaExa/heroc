@@ -19,7 +19,7 @@ type Post struct {
 func main() {
     startTime := time.Now()
     postsDirPath := "./posts" // Directory containing JSON and MD files
-    outputDir := "./public"    // Output directory for generated HTML files
+    outputDir := "./public"    // Output directory for generated files
 
     allPosts := []Post{}
     totalPages := 0
@@ -85,28 +85,15 @@ func main() {
         // Use an incrementing counter for the post title
         postTitle := fmt.Sprintf("Post %d", i+1) // Title as "Post X"
         baseFileName := strings.ToLower(strings.ReplaceAll(postTitle, " ", "-"))
-        fileName := fmt.Sprintf("%s.html", baseFileName)
+        fileName := fmt.Sprintf("%s.txt", baseFileName) // Change to .txt for raw content
 
         folderPath := filepath.Join(outputDir, post.Folder)
         os.MkdirAll(folderPath, os.ModePerm)
 
         filePath := filepath.Join(folderPath, fileName)
 
-        htmlContent := fmt.Sprintf(`<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title>
-</head>
-<body>
-    <h1>%s</h1>
-    <div>%s</div> 
-</body>
-</html>
-`, postTitle, postTitle, post.Content)
-
-        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
+        // Write only the raw content to the file
+        err := ioutil.WriteFile(filePath, []byte(post.Content), 0644)
         if err != nil {
             fmt.Println("Error writing file:", err)
             return
