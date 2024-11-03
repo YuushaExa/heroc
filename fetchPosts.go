@@ -102,7 +102,7 @@ func main() {
 </head>
 <body>
     <h1>%s</h1>
-    <div>%s</div> 
+    <div><pre>%s</pre></div> 
 </body>
 </html>
 `, postTitle, postTitle, post.Content)
