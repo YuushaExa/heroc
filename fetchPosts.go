@@ -129,8 +129,6 @@ func generateHTML(post Post, outputDir string) {
         fmt.Println("Error executing template:", err)
         return
     }
-
-    fmt.Println("Created post:", filepath.Join(post.Folder, uniqueFileName))
 }
 
 func generateUniqueFilename(title string) string {
