@@ -1,12 +1,16 @@
 package main
 
 import (
+    "crypto/sha256"
+    "encoding/hex"
     "encoding/json"
     "fmt"
+    "html/template"
     "io/ioutil"
     "os"
     "path/filepath"
     "strings"
+    "sync"
     "time"
 )
 
@@ -17,120 +21,119 @@ type Post struct {
     Folder  string `json:"folder"`
 }
 
-func main() {
-    startTime := time.Now()
-    postsDirPath := "./posts" // Directory containing JSON and MD files
-    outputDir := "./public"    // Output directory for generated HTML files
-
-    allPosts := []Post{}
-    totalPages := 0
-    nonPageFiles := 0
-    staticFiles := 0
-
-    err := filepath.Walk(postsDirPath, func(path string, info os.FileInfo, err error) error {
-        if err != nil {
-            return err
-        }
-
-        if info.IsDir() {
-            return nil
-        }
-
-        switch {
-        case strings.HasSuffix(info.Name(), ".json"):
-            // Read and parse JSON files
-            data, err := ioutil.ReadFile(path)
-            if err != nil {
-                return err
-            }
-            var posts []Post
-            err = json.Unmarshal(data, &posts)
-            if err != nil {
-                return err
-            }
-            folder := filepath.Dir(path)
-            for i := range posts {
-                posts[i].Folder = folder
-                allPosts = append(allPosts, posts[i])
-            }
-            totalPages += len(posts)
-            nonPageFiles++
-
-        case strings.HasSuffix(info.Name(), ".md"):
-            // Read Markdown files
-            data, err := ioutil.ReadFile(path)
-            if err != nil {
-                return err
-            }
-            title := strings.TrimSuffix(info.Name(), ".md")
-            folder := filepath.Dir(path)
-            date := time.Now().Format(time.RFC3339)
-            content := string(data) // Use the raw content of the Markdown file
-            allPosts = append(allPosts, Post{Title: title, Content: content, Date: date, Folder: folder})
-            totalPages++
-
-        default:
-            staticFiles++
-        }
-        return nil
-    })
-
-    if err != nil {
-        fmt.Println("Error:", err)
-        return
-    }
-
-    // Create output directory
-    os.MkdirAll(outputDir, os.ModePerm)
-
-    titleCount := make(map[string]bool)
-
-    for _, post := range allPosts {
-        baseFileName := strings.ToLower(strings.ReplaceAll(post.Title, " ", "-"))
-        fileName := fmt.Sprintf("%s.html", baseFileName)
-        count := 1
-
-        // Check for duplicates and modify the file name if necessary
-        for titleCount[fileName] {
-            fileName = fmt.Sprintf("%s-%d.html", baseFileName, count)
-            count++
-        }
-        titleCount[fileName] = true
-
-        folderPath := filepath.Join(outputDir, post.Folder)
-        os.MkdirAll(folderPath, os.ModePerm)
-
-        filePath := filepath.Join(folderPath, fileName)
-
-        htmlContent := fmt.Sprintf(`<!DOCTYPE html>
+var htmlTemplate = template.Must(template.New("post").Parse(`
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>%s</title>
+    <title>{{.Title}}</title>
 </head>
 <body>
-    <h1>%s</h1>
-    <div>%s</div> 
+    <h1>{{.Title}}</h1>
+    <div>{{.Content}}</div>
 </body>
 </html>
-`, post.Title, post.Title, post.Content)
+`))
 
-        err := ioutil.WriteFile(filePath, []byte(htmlContent), 0644)
-        if err != nil {
-            fmt.Println("Error writing file:", err)
-            return
+func main() {
+    startTime := time.Now()
+    postsDirPath := "./posts"
+    outputDir := "./public"
+
+    os.MkdirAll(outputDir, os.ModePerm)
+
+    var paths []string
+    err := filepath.Walk(postsDirPath, func(path string, info os.FileInfo, err error) error {
+        if err != nil || info.IsDir() {
+            return err
         }
+        paths = append(paths, path)
+        return nil
+    })
 
-        // Log the relative URL
-        relativeUrl := filepath.Join(post.Folder, fileName)
-        fmt.Println("Created post:", relativeUrl)
+    if err != nil {
+        fmt.Println("Error walking directory:", err)
+        return
     }
 
-    // After processing all posts, log the statistics
-    fmt.Println("--- Build Statistics ---")
-    fmt.Printf("Total Pages: %d\n", totalPages)
-    fmt.Printf("Non-page Files: %d\n", nonPageFiles)
-    fmt.Printf("Static Files: %d\n", staticFiles)
+    processFiles(paths, outputDir)
+
     fmt.Printf("Total Build Time: %v\n", time.Since(startTime))
+}
+
+func processFiles(paths []string, outputDir string) {
+    var wg sync.WaitGroup
+    sem := make(chan struct{}, 10) // Limit concurrency to 10 goroutines
+
+    for _, path := range paths {
+        sem <- struct{}{} // Acquire semaphore
+        wg.Add(1)
+        go func(path string) {
+            defer wg.Done()
+            defer func() { <-sem }() // Release semaphore
+
+            processFile(path, outputDir)
+        }(path)
+    }
+
+    wg.Wait()
+}
+
+func processFile(path string, outputDir string) {
+    data, err := ioutil.ReadFile(path)
+    if err != nil {
+        fmt.Println("Error reading file:", err)
+        return
+    }
+
+    folder := filepath.Dir(path)
+    ext := filepath.Ext(path)
+    fileName := strings.TrimSuffix(filepath.Base(path), ext)
+
+    var post Post
+    switch ext {
+    case ".json":
+        var posts []Post
+        if err := json.Unmarshal(data, &posts); err != nil {
+            fmt.Println("Error parsing JSON:", err)
+            return
+        }
+        for _, p := range posts {
+            p.Folder = folder
+            generateHTML(p, outputDir)
+        }
+    case ".md":
+        post.Title = fileName
+        post.Content = string(data)
+        post.Date = time.Now().Format(time.RFC3339)
+        post.Folder = folder
+        generateHTML(post, outputDir)
+    }
+}
+
+func generateHTML(post Post, outputDir string) {
+    uniqueFileName := generateUniqueFilename(post.Title)
+    folderPath := filepath.Join(outputDir, post.Folder)
+    os.MkdirAll(folderPath, os.ModePerm)
+
+    filePath := filepath.Join(folderPath, uniqueFileName)
+    file, err := os.Create(filePath)
+    if err != nil {
+        fmt.Println("Error creating file:", err)
+        return
+    }
+    defer file.Close()
+
+    if err := htmlTemplate.Execute(file, post); err != nil {
+        fmt.Println("Error executing template:", err)
+        return
+    }
+
+    fmt.Println("Created post:", filepath.Join(post.Folder, uniqueFileName))
+}
+
+func generateUniqueFilename(title string) string {
+    hash := sha256.Sum256([]byte(title))
+    return hex.EncodeToString(hash[:]) + ".html"
 }
